@@ -2,7 +2,10 @@ import type { SqlDb } from './types';
 import schemaV1 from './schema.sql?raw';
 
 /** Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one. */
-export const MIGRATIONS: string[] = [schemaV1];
+/** 002: app-level key/value settings (e.g. last_export_at). Not part of JSON dumps. */
+const appMeta = 'CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;';
+
+export const MIGRATIONS: string[] = [schemaV1, appMeta];
 
 export function currentVersion(db: SqlDb): number {
   return db.query<{ user_version: number }>('PRAGMA user_version')[0].user_version;

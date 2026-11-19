@@ -2,6 +2,8 @@
   import { rpc } from '../db/client';
   import type { SeriesRow } from '../db/series';
   import { href } from './route';
+  import { backupOverdue, type BackupStatus } from '../db/meta';
+  import { timeAgo } from './timeAgo';
 
   let series = $state<SeriesRow[]>([]);
   let name = $state('');
@@ -9,8 +11,10 @@
   let busy = $state(false);
   let error = $state<string | null>(null);
 
+  let backup = $state<BackupStatus | null>(null);
+
   async function load() {
-    series = await rpc('listSeries');
+    [series, backup] = await Promise.all([rpc('listSeries'), rpc('backupStatus')]);
   }
 
   async function create(ev: SubmitEvent) {
@@ -31,6 +35,13 @@
 </script>
 
 <h1>Library</h1>
+
+{#if backup && backupOverdue(backup)}
+  <div class="backup card" role="note">
+    <span>💾 {backup.lastExportAt ? `Last backup ${timeAgo(backup.lastExportAt)}.` : "You haven't backed up yet."} Your library lives only in this browser.</span>
+    <a class="button" href="#/settings">Back up now</a>
+  </div>
+{/if}
 
 {#if series.length === 0}
   <p class="muted">No series yet. Add the first one below.</p>
@@ -57,6 +68,7 @@
 </form>
 
 <style>
+  .backup { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; border-color: var(--warn-text); background: var(--warn-bg); color: var(--warn-text); margin-bottom: 1rem; }
   .item { display: grid; gap: 0.15rem; text-decoration: none; color: inherit; }
   .item:hover { border-color: var(--accent); }
 </style>

@@ -18,7 +18,7 @@ npm run build    # production build + service worker
 - `docs/specs/`, `docs/plans/`: design and plan documents.
 
 ## Status
-Steps 1–5 of the handoff build order are done: data layer, export/import, app shell; books, entity types, entries with `@` linking and backlinks; events (present/recounted, told by, participants), ages, vague dates and sort keys; the timeline (story order, reading order, story × reading chart, filters); relationships and the relationship graph.
-Next is step 6: search, mobile polish, backup/restore.
+All six steps of the handoff build order are done: data layer, export/import, app shell; books, entity types, entries with `@` linking and backlinks; events (present/recounted, told by, participants), ages, vague dates and sort keys; the timeline (story order, reading order, story × reading chart, filters); relationships and the relationship graph; search (/ or Ctrl+K), JSON import (replace or add), per-series export, backup reminders, install prompt.
+Remaining open idea from the handoff: a per-book notes feature (not in the schema yet).
 
 Dev sample: run `await loadMalazanSample()` in the browser console (dev server only). It is extended after every step.

@@ -1,6 +1,7 @@
 import { mount } from 'svelte';
 import './app.css';
 import App from './App.svelte';
+import './lib/install.svelte'; // registers the install-prompt listener early
 import { db } from './db/client';
 
 // Dev-only console handle for poking at the database.

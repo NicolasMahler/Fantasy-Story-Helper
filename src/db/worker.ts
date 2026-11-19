@@ -4,6 +4,8 @@ import type { SqlDb } from './types';
 import { migrate } from './migrations';
 import { api } from './api';
 import { dumpJson } from './dump';
+import { importJson } from './transfer';
+import { recordExport } from './meta';
 import type { InitInfo, Ops, OpName, Request, Response, StorageMode } from './protocol';
 
 const VFS_NAME = 'fantasy-helper';
@@ -109,8 +111,16 @@ const handlers: { [K in OpName]: (...args: Ops[K][0]) => Ops[K][1] | Promise<Ops
     const fn = (api as Record<string, (db: SqlDb, ...a: unknown[]) => unknown>)[name];
     return fn(db, ...args);
   },
-  exportSqlite: () => sqlite3.capi.sqlite3_js_db_export(raw),
-  exportJson: () => dumpJson(db),
+  exportSqlite: () => {
+    recordExport(db);
+    return sqlite3.capi.sqlite3_js_db_export(raw);
+  },
+  exportJson: (seriesId) => {
+    const dump = dumpJson(db, seriesId);
+    if (seriesId === undefined) recordExport(db); // only full exports count as backups
+    return dump;
+  },
+  importJson: (raw, mode) => importJson(db, raw, mode),
   importSqlite,
 };
 

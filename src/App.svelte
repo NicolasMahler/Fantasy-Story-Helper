@@ -6,11 +6,24 @@
   import SeriesPage from './lib/SeriesPage.svelte';
   import EntityPage from './lib/EntityPage.svelte';
   import EntityForm from './lib/EntityForm.svelte';
+  import SearchOverlay from './lib/SearchOverlay.svelte';
 
   let info = $state<StartupInfo | null>(null);
   let error = $state<string | null>(null);
   let hash = $state(location.hash);
   const route = $derived(parseRoute(hash));
+  const currentSeries = $derived('seriesId' in route ? route.seriesId : null);
+  let searchOpen = $state(false);
+  let headerH = $state(52);
+  $effect(() => document.documentElement.style.setProperty('--header-h', `${headerH}px`));
+
+  function onGlobalKey(e: KeyboardEvent) {
+    const typing = (e.target as HTMLElement)?.closest?.('input, textarea, select, [contenteditable]');
+    if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !typing)) {
+      e.preventDefault();
+      searchOpen = true;
+    }
+  }
 
   db.init().then((i) => (info = i), (e: Error) => (error = e.message));
 
@@ -24,9 +37,13 @@
   });
 </script>
 
-<header>
+<svelte:window onkeydown={onGlobalKey} />
+<SearchOverlay bind:open={searchOpen} seriesId={currentSeries} />
+
+<header bind:clientHeight={headerH}>
   <a class="brand" href="#/">Fantasy Helper</a>
   <nav>
+    <button class="search" onclick={() => (searchOpen = true)} aria-label="Search (/ or Ctrl+K)" title="Search (/ or Ctrl+K)">🔍<span class="label"> Search</span></button>
     <a href="#/" aria-current={route.name === 'library' ? 'page' : undefined}>Library</a>
     <a href="#/settings" aria-current={route.name === 'settings' ? 'page' : undefined}>Settings</a>
   </nav>
@@ -78,9 +95,15 @@
     padding: 0.75rem 16px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
   }
   .brand { font-weight: 700; color: var(--text); text-decoration: none; }
-  nav { display: flex; gap: 1rem; }
+  nav { display: flex; gap: 1rem; align-items: center; }
+  .search { min-height: 36px; padding: 0.2rem 0.7rem; font-size: 0.85rem; color: var(--muted); border-radius: 999px; }
+  @media (max-width: 420px) { .search .label { display: none; } nav { gap: 0.75rem; } }
   nav a { text-decoration: none; color: var(--muted); padding: 0.5rem 0; }
   nav a[aria-current='page'] { color: var(--text); font-weight: 600; }
   .banner { background: var(--warn-bg); color: var(--warn-text); padding: 0.75rem 16px; }

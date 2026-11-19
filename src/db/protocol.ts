@@ -1,4 +1,5 @@
 import type { JsonDump } from './dump';
+import type { ImportMode, ImportResult } from './transfer';
 
 /** Where the data actually lives this session. */
 export type StorageMode =
@@ -19,7 +20,9 @@ export interface Ops {
   exec: [[sql: string, params?: unknown[]], void];
   api: [[name: string, args: unknown[]], unknown];
   exportSqlite: [[], Uint8Array];
-  exportJson: [[], JsonDump];
+  /** Whole database, or one series when an id is given. */
+  exportJson: [[seriesId?: number], JsonDump];
+  importJson: [[raw: unknown, mode: ImportMode], ImportResult];
   importSqlite: [[bytes: Uint8Array], InitInfo];
 }
 export type OpName = keyof Ops;

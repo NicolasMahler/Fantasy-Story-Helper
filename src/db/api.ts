@@ -10,6 +10,8 @@ import { getEventDetail, saveEvent, addParticipant, updateParticipantRole, remov
 import { getTimeline } from './timeline';
 import { getGraph } from './graph';
 import { createLink, deleteLink, listLinks } from './links';
+import { search } from './search';
+import { backupStatus } from './meta';
 import { listAges, createAge, updateAge, deleteAge, listBuckets, updateBucket } from './calendar';
 
 /** Every domain function the UI may call through the worker. Each takes the db first. */
@@ -22,6 +24,7 @@ export const api = {
   listAges, createAge, updateAge, deleteAge, listBuckets, updateBucket,
   getTimeline,
   getGraph, createLink, deleteLink, listLinks,
+  search, backupStatus,
 };
 
 export type Api = typeof api;

@@ -40,7 +40,8 @@ export const db = {
     call('query', sql, params) as Promise<T[]>,
   exec: (sql: string, params?: unknown[]) => call('exec', sql, params),
   exportSqlite: () => call('exportSqlite'),
-  exportJson: () => call('exportJson'),
+  exportJson: (seriesId?: number) => (seriesId === undefined ? call('exportJson') : call('exportJson', seriesId)),
+  importJson: (raw: unknown, mode: 'replace' | 'add') => call('importJson', raw, mode),
   importSqlite: (bytes: Uint8Array) => call('importSqlite', bytes),
 };
 

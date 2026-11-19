@@ -15,7 +15,7 @@ describe('migrate', () => {
     const db = openNodeDb();
     expect(migrate(db)).toBe(MIGRATIONS.length);
     expect(objects(db, 'table')).toEqual([
-      'age', 'book', 'bucket_default', 'entity', 'entity_link', 'entity_type',
+      'age', 'app_meta', 'book', 'bucket_default', 'entity', 'entity_link', 'entity_type',
       'event', 'event_participant', 'mention', 'series',
     ]);
     expect(objects(db, 'view')).toEqual(['v_cooccurrence', 'v_timeline']);
