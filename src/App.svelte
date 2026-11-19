@@ -7,6 +7,7 @@
   import EntityPage from './lib/EntityPage.svelte';
   import EntityForm from './lib/EntityForm.svelte';
   import SearchOverlay from './lib/SearchOverlay.svelte';
+  import { update, applyUpdate, dismissUpdate } from './lib/update.svelte';
 
   let info = $state<StartupInfo | null>(null);
   let error = $state<string | null>(null);
@@ -86,6 +87,16 @@
   {/if}
 </main>
 
+{#if update.ready}
+  <div class="update" role="status">
+    <span>A new version of Fantasy Helper is ready.</span>
+    <div class="row tight">
+      <button class="primary" onclick={applyUpdate}>Reload</button>
+      <button onclick={dismissUpdate}>Later</button>
+    </div>
+  </div>
+{/if}
+
 <style>
   header {
     display: flex;
@@ -108,4 +119,24 @@
   nav a[aria-current='page'] { color: var(--text); font-weight: 600; }
   .banner { background: var(--warn-bg); color: var(--warn-text); padding: 0.75rem 16px; }
   main { max-width: 760px; margin: 0 auto; padding: 1rem 16px 3rem; }
+  .update {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    max-width: 560px;
+    margin: 0 auto;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 0.75rem 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+  }
+  .update .row.tight { gap: 0.5rem; }
 </style>

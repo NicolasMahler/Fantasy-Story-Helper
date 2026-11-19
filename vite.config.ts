@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     svelte(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // new versions wait until the user taps Reload (see src/lib/update.svelte.ts)
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Fantasy Helper',
