@@ -124,6 +124,6 @@
 </form>
 
 <style>
-  .field { display: grid; gap: 0.25rem; font-size: 0.9rem; }
+  .field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; font-size: 0.9rem; }
   .field :global(textarea) { font-size: 1rem; }
 </style>
