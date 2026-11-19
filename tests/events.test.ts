@@ -144,6 +144,16 @@ describe('participants', () => {
     expect(() => addParticipant(db, ev, foreign)).toThrow(/series/i);
   });
 
+  it('rejects renaming a role to one the entry already has, and missing participants', () => {
+    const ev = newEvent('Battle');
+    const hero = createEntity(db, { seriesId, typeId: typeId('character'), name: 'Hero' });
+    const p1 = addParticipant(db, ev, hero);
+    addParticipant(db, ev, hero, 'leader');
+    expect(() => updateParticipantRole(db, p1, 'leader')).toThrow('Hero is already listed as leader.');
+    updateParticipantRole(db, p1, 'participant'); // unchanged role is fine
+    expect(() => updateParticipantRole(db, 9999, 'leader')).toThrow(/no longer exists/);
+  });
+
   it('lists an entry\'s events in story order, undated last', () => {
     const hero = createEntity(db, { seriesId, typeId: typeId('character'), name: 'Hero' });
     const late = newEvent('Late');

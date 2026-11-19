@@ -5,6 +5,7 @@
   import { download, backupName } from './download';
   import { install, promptInstall } from './install.svelte';
   import { timeAgo } from './timeAgo';
+  import { attempt } from './forms';
 
   let { info = $bindable() }: { info: StartupInfo } = $props();
 
@@ -27,25 +28,27 @@
     seriesToExport ??= series[0]?.id ?? null;
   }
 
-  async function exportSqlite() {
+  const exportFailed = (m: string) => (status = `Export failed. ${m}`);
+
+  const exportSqlite = () => attempt(async () => {
     download((await db.exportSqlite()) as Uint8Array<ArrayBuffer>, backupName('sqlite'), 'application/vnd.sqlite3');
     status = 'Database file downloaded.';
     await refresh();
-  }
+  }, exportFailed);
 
-  async function exportJson() {
+  const exportJson = () => attempt(async () => {
     download(JSON.stringify(await db.exportJson(), null, 2), backupName('json'), 'application/json');
     status = 'JSON backup downloaded.';
     await refresh();
-  }
+  }, exportFailed);
 
-  async function exportSeries() {
+  const exportSeries = () => attempt(async () => {
     if (seriesToExport === null) return;
     const dump = await db.exportJson(seriesToExport);
     const slug = (dump.seriesName ?? 'series').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     download(JSON.stringify(dump, null, 2), `${slug || 'series'}-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
     status = `“${dump.seriesName}” exported. Import it elsewhere with “Add as new series”.`;
-  }
+  }, exportFailed);
 
   function pick(input: HTMLInputElement): File | null {
     const file = input.files?.[0] ?? null;

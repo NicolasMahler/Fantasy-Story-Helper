@@ -275,11 +275,19 @@ export function addParticipant(db: SqlDb, eventId: number, entityId: number, rol
 export function updateParticipantRole(db: SqlDb, participantId: number, role: string): void {
   const r = role.trim();
   if (!r) throw new Error('Role is required.');
-  try {
+  db.transaction(() => {
+    const [p] = db.query<{ event_id: number; entity_id: number; name: string }>(
+      'SELECT p.event_id, p.entity_id, e.name FROM event_participant p JOIN entity e ON e.id = p.entity_id WHERE p.id = ?',
+      [participantId],
+    );
+    if (!p) throw new Error('That participant no longer exists.');
+    const dup = db.query(
+      'SELECT 1 FROM event_participant WHERE event_id = ? AND entity_id = ? AND role = ? AND id <> ?',
+      [p.event_id, p.entity_id, r, participantId],
+    ).length;
+    if (dup) throw new Error(`${p.name} is already listed as ${r}.`);
     db.exec('UPDATE event_participant SET role = ? WHERE id = ?', [r, participantId]);
-  } catch {
-    throw new Error(`That entry is already listed as ${r}.`);
-  }
+  });
 }
 
 export function removeParticipant(db: SqlDb, participantId: number): void {

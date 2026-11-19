@@ -8,6 +8,7 @@
   import CalendarTab from './CalendarTab.svelte';
   import TimelineTab from './TimelineTab.svelte';
   import GraphTab from './GraphTab.svelte';
+  import { attempt } from './forms';
 
   let { seriesId, tab }: { seriesId: number; tab: SeriesTab } = $props();
 
@@ -31,20 +32,17 @@
 
   async function save(ev: SubmitEvent) {
     ev.preventDefault();
-    try {
+    await attempt(async () => {
       await rpc('updateSeries', seriesId, { name, description });
       editing = false;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   async function remove() {
     if (!series) return;
     if (!confirm(`Delete “${series.name}” and everything in it? This can't be undone.`)) return;
-    await rpc('deleteSeries', seriesId);
-    location.hash = '#/';
+    if (await attempt(() => rpc('deleteSeries', seriesId), (m) => (error = m))) location.hash = '#/';
   }
 
   const tabs: { id: SeriesTab; label: string }[] = [

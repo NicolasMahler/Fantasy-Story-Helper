@@ -7,6 +7,7 @@
   import EventPanel from './EventPanel.svelte';
   import Relationships from './Relationships.svelte';
   import type { EntityEvent } from '../db/events';
+  import { attempt } from './forms';
 
   let { seriesId, entityId }: { seriesId: number; entityId: number } = $props();
 
@@ -29,8 +30,8 @@
     const n = mentionedIn.length;
     const extra = n ? ` ${n} ${n === 1 ? 'entry links' : 'entries link'} to it; those links will become plain text.` : '';
     if (!confirm(`Delete “${entity.name}”?${extra} This can't be undone.`)) return;
-    await rpc('deleteEntity', entityId);
-    location.hash = href({ name: 'series', seriesId, tab: 'entries' });
+    const ok = await attempt(() => rpc('deleteEntity', entityId), (m) => alert(`Couldn't delete: ${m}`));
+    if (ok) location.hash = href({ name: 'series', seriesId, tab: 'entries' });
   }
 
   load();

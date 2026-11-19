@@ -13,6 +13,7 @@
     id,
   }: { value: string; seriesId: number; types: EntityTypeRow[]; rows?: number; id?: string } = $props();
 
+  const listId = $props.id();
   let ta: HTMLTextAreaElement;
   let query = $state<AtQuery | null>(null);
   let results = $state<EntityListItem[]>([]);
@@ -119,7 +120,7 @@
     onblur={() => setTimeout(() => { if (!creating) query = null; }, 150)}
     role="combobox"
     aria-expanded={open}
-    aria-controls="mention-list"
+    aria-controls={listId}
     aria-autocomplete="list"
   ></textarea>
 
@@ -134,7 +135,7 @@
       {#if error}<p class="error">{error}</p>{/if}
     </div>
   {:else if open}
-    <ul class="popup" id="mention-list" role="listbox">
+    <ul class="popup" id={listId} role="listbox">
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => choose(i)}>

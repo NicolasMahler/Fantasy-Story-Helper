@@ -24,11 +24,16 @@
   let width = $state(700);
   const height = $derived(width < 560 ? 420 : 540);
 
+  let loadError = $state<string | null>(null);
+
   $effect(() => {
-    rpc('getGraph', seriesId).then((d) => {
-      data = d;
-      typeIds = d.types.filter((t) => DEFAULT_TYPES.includes(t.key)).map((t) => t.id);
-    });
+    rpc('getGraph', seriesId).then(
+      (d) => {
+        data = d;
+        typeIds = d.types.filter((t) => DEFAULT_TYPES.includes(t.key)).map((t) => t.id);
+      },
+      (e: Error) => (loadError = `Couldn't load the graph: ${e.message}`),
+    );
   });
 
   const model = $derived(data ? buildGraph(data, { typeIds, bookId, minShared, showLinks }) : null);
@@ -304,7 +309,7 @@
     <span><i class="lr"></i>Relationship you added</span><span>Bigger dot = more connections</span>
   </div>
 {:else}
-  <p class="muted">Loading graph…</p>
+  <p class="muted">{loadError ?? 'Loading graph…'}</p>
 {/if}
 
 <style>
