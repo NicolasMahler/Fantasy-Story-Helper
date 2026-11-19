@@ -105,6 +105,8 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
     if (patch.description !== undefined) set('description', patch.description);
     if (patch.firstBookId !== undefined) set('first_book_id', patch.firstBookId);
     if (patch.attributes !== undefined) set('attributes', JSON.stringify(patch.attributes));
+    // Sort keys only depend on event rows, so only an Event ↔ non-Event retype can change them.
+    let eventsChanged = false;
     if (patch.typeId !== undefined && patch.typeId !== cur.type_id) {
       const wasEvent = typeKey(db, cur.series_id, cur.type_id) === 'event';
       const isEvent = typeKey(db, cur.series_id, patch.typeId) === 'event';
@@ -114,21 +116,25 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
         freezeDependents(db, id);
         db.exec('DELETE FROM event WHERE entity_id = ?', [id]);
       }
+      eventsChanged = wasEvent !== isEvent;
     }
     sets.push(`updated_at = datetime('now')`);
     db.exec(`UPDATE entity SET ${sets.join(', ')} WHERE id = ?`, [...params, id]);
     if (patch.description !== undefined) rebuildMentions(db, id, cur.series_id, patch.description);
-    recomputeSeries(db, cur.series_id);
+    if (eventsChanged) recomputeSeries(db, cur.series_id);
   });
 }
 
 export function deleteEntity(db: SqlDb, id: number): void {
   db.transaction(() => {
-    const [cur] = db.query<{ series_id: number }>('SELECT series_id FROM entity WHERE id = ?', [id]);
+    const [cur] = db.query<{ series_id: number; is_event: number }>(
+      'SELECT series_id, EXISTS (SELECT 1 FROM event WHERE entity_id = entity.id) AS is_event FROM entity WHERE id = ?',
+      [id],
+    );
     if (!cur) return;
-    freezeDependents(db, id);
+    if (cur.is_event) freezeDependents(db, id);
     db.exec('DELETE FROM entity WHERE id = ?', [id]);
-    recomputeSeries(db, cur.series_id);
+    if (cur.is_event) recomputeSeries(db, cur.series_id);
   });
 }
 

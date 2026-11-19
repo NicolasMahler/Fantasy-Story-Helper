@@ -73,6 +73,15 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
        OR e.id IN (SELECT from_entity_id FROM entity_link WHERE kind LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\'))`,
     [...scopeParams, like, like, like, like, like],
   );
+  // First matching relationship per entity, fetched in one query rather than one per entity.
+  const linkHits = new Map<number, { kind: string; note: string; other: string }>();
+  for (const l of db.query<{ from_id: number; kind: string; note: string; other: string }>(
+    `SELECT l.from_entity_id AS from_id, l.kind, l.note, o.name AS other
+     FROM entity_link l JOIN entity e ON e.id = l.from_entity_id JOIN entity o ON o.id = l.to_entity_id
+     WHERE ${scope} AND (l.kind LIKE ? ESCAPE '\\' OR l.note LIKE ? ESCAPE '\\') ORDER BY l.id`,
+    [...scopeParams, like, like],
+  )) if (!linkHits.has(l.from_id)) linkHits.set(l.from_id, l);
+
   for (const e of entities) {
     const base = { kind: 'entity' as const, id: e.id, seriesId: e.series_id, name: e.name, icon: e.icon, color: e.color, typeName: e.type_name };
     const name = e.name.toLowerCase();
@@ -92,11 +101,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       ranked.push({ rank: 2, r: { ...base, field: label, snippet: makeSnippet(String(hit[1]), q) } });
       continue;
     }
-    const link = db.query<{ kind: string; note: string; other: string }>(
-      `SELECT l.kind, l.note, o.name AS other FROM entity_link l JOIN entity o ON o.id = l.to_entity_id
-       WHERE l.from_entity_id = ? AND (l.kind LIKE ? ESCAPE '\\' OR l.note LIKE ? ESCAPE '\\') LIMIT 1`,
-      [e.id, like, like],
-    )[0];
+    const link = linkHits.get(e.id);
     if (link) {
       const text = `${link.kind} ${link.other}${link.note ? `: ${link.note}` : ''}`;
       ranked.push({ rank: 3, r: { ...base, field: 'relationship', snippet: makeSnippet(text, q) } });

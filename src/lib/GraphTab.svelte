@@ -106,7 +106,8 @@
   const zoomBy = (f: number) => svgEl && zoomer && select(svgEl).call(zoomer.scaleBy, f);
 
   // ---------- node drag / click ----------
-  let drag: { id: number; startX: number; startY: number; moved: boolean } | null = null;
+  /** `node` is looked up once on pointerdown so moves don't search the node list. */
+  let drag: { id: number; node: SimNode | undefined; startX: number; startY: number; moved: boolean } | null = null;
 
   function toSim(ev: PointerEvent) {
     const rect = svgEl!.getBoundingClientRect();
@@ -115,20 +116,20 @@
 
   function onNodeDown(ev: PointerEvent, id: number) {
     (ev.currentTarget as Element).setPointerCapture(ev.pointerId);
-    drag = { id, startX: ev.clientX, startY: ev.clientY, moved: false };
+    drag = { id, node: simNodes.find((s) => s.id === id), startX: ev.clientX, startY: ev.clientY, moved: false };
   }
   function onNodeMove(ev: PointerEvent) {
     if (!drag || !sim) return;
     if (!drag.moved && Math.hypot(ev.clientX - drag.startX, ev.clientY - drag.startY) < 4) return;
     drag.moved = true;
-    const n = simNodes.find((s) => s.id === drag!.id);
+    const n = drag.node;
     if (!n) return;
     [n.fx, n.fy] = toSim(ev);
     sim.alphaTarget(0.25).restart();
   }
   function onNodeUp() {
     if (!drag) return;
-    const n = simNodes.find((s) => s.id === drag!.id);
+    const n = drag.node;
     if (n) { n.fx = null; n.fy = null; }
     sim?.alphaTarget(0);
     if (!drag.moved) selected = selected?.kind === 'node' && selected.id === drag.id ? null : { kind: 'node', id: drag.id };
