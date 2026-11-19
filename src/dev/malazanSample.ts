@@ -1,13 +1,14 @@
 import { rpc } from '../db/client';
 
 /**
- * Dev-only sample data: a small slice of Malazan Book of the Fallen, Books 1–2.
+ * Dev-only sample data: a small slice of Malazan Book of the Fallen, Book 1 (Gardens of the Moon) ONLY.
+ * Keep every entry and event within Book 1.
  * Descriptions write links as {{Entry name}}; they are turned into real @-links once every entry exists.
  */
 /** `book` is the book number the entry first appears in (default 1). */
 type Sample = { type: string; name: string; description: string; book?: number };
 
-const BOOKS = ['Gardens of the Moon', 'Deadhouse Gates'];
+const BOOKS = ['Gardens of the Moon'];
 
 const SERIES = 'Malazan Book of the Fallen';
 
@@ -24,7 +25,8 @@ const ENTRIES: Sample[] = [
   { type: 'character', name: 'Anomander Rake', description: 'Son of Darkness, lord of the {{Tiste Andii}} and master of {{Moon\'s Spawn}}. Wields the sword {{Dragnipur}}.' },
   { type: 'character', name: 'Crokus Younghand', description: 'Young thief of {{Darujhistan}} who becomes the unwitting bearer of the {{Coin of Oponn}}.' },
   { type: 'character', name: 'Kruppe', description: 'Self-important, rotund dream-reader of the {{Phoenix Inn}} who speaks of himself in the third person. Much cleverer than he seems.' },
-  { type: 'character', name: 'Rallick Nom', description: 'Assassin of {{Darujhistan}} and friend of {{Crokus Younghand}}, plotting revenge for his friend Coll.' },
+  { type: 'character', name: 'Rallick Nom', description: 'Assassin of {{Darujhistan}} and friend of {{Crokus Younghand}}, plotting revenge for his friend {{Coll}}.' },
+  { type: 'character', name: 'Coll', description: 'Ruined noble of {{Darujhistan}}, betrayed by his wife; friend of {{Rallick Nom}}.' },
   { type: 'character', name: 'Baruk', description: 'High alchemist of {{Darujhistan}} and member of the {{T\'orrud Cabal}}, working quietly against the {{Malazan Empire}}.' },
   { type: 'character', name: 'Tool', description: 'A {{T\'lan Imass}} who accompanies {{Adjunct Lorn}} on her mission to the {{Gadrobi Hills}}.' },
   { type: 'character', name: 'Cotillion', description: 'The Rope, patron of assassins and companion of Shadowthrone. Rides {{Sorry}} as a vessel.' },
@@ -63,14 +65,7 @@ const ENTRIES: Sample[] = [
   { type: 'event', name: 'T\'lan Imass–Jaghut Wars', description: 'The ancient war of extermination waged by the {{T\'lan Imass}} against the {{Jaghut}}, as {{Tool}} remembers it.' },
   { type: 'event', name: 'Imprisonment of the Jaghut Tyrant', description: 'Long ago, a {{Jaghut Tyrant}} was sealed in a barrow in the {{Gadrobi Hills}}.' },
   { type: 'event', name: 'Release of the Jaghut Tyrant', description: '{{Adjunct Lorn}} and {{Tool}} free the {{Jaghut Tyrant}} to unleash him on {{Darujhistan}}.' },
-  // Step 4: Book 2 (Deadhouse Gates), so reading order and the story × reading chart have something to show.
-  { type: 'location', name: 'Seven Cities', description: 'Desert subcontinent under Malazan rule, simmering towards rebellion.', book: 2 },
-  { type: 'character', name: 'Coltaine', description: 'Wickan Fist who leads the {{Chain of Dogs}} across {{Seven Cities}}.', book: 2 },
-  { type: 'character', name: 'Duiker', description: 'Imperial Historian who marches with {{Coltaine}} and records the {{Chain of Dogs}}.', book: 2 },
-  { type: 'event', name: 'Whirlwind Rebellion', description: 'The uprising that sweeps {{Seven Cities}} against the {{Malazan Empire}}.', book: 2 },
-  { type: 'event', name: 'Chain of Dogs', description: "{{Coltaine}}'s desperate march protecting refugees across {{Seven Cities}}, chronicled by {{Duiker}}.", book: 2 },
-  { type: 'event', name: 'Fall of the First Empire', description: 'The ancient collapse of the First Empire of {{Seven Cities}}, as {{Duiker}} the historian tells it.', book: 2 },
-  { type: 'event', name: "Kellanved's Ascension", description: 'How the founder of the {{Malazan Empire}} passed beyond mortal rule. Rumours disagree on when.', book: 2 },
+  { type: 'event', name: 'Betrayal of Coll', description: "How {{Coll}} lost his estate and standing to his wife's treachery, the wrong {{Rallick Nom}} means to avenge." },
 ];
 
 /**
@@ -121,22 +116,10 @@ const EVENTS: EventSample[] = [
     name: 'Release of the Jaghut Tyrant', date: { relative: 'Fête of Gedderone', offset: 0 },
     participants: [['Adjunct Lorn', 'leader'], ['Tool'], ['Jaghut Tyrant'], ['Gadrobi Hills']],
   },
-  // Step 4 (Book 2): a pinned event, a recounted ancient one, and an undated recounted one.
+  // Undated + recounted example (timeline: Undated section; chart: not plotted).
   {
-    name: 'Whirlwind Rebellion', book: 2, date: { year: 1164, age: "Burn's Sleep" }, pin: 1163.5,
-    participants: [['Seven Cities'], ['Malazan Empire']],
-  },
-  {
-    name: 'Chain of Dogs', book: 2, date: { relative: 'Whirlwind Rebellion', offset: 0 },
-    participants: [['Coltaine', 'leader'], ['Duiker', 'witness'], ['Seven Cities']],
-  },
-  {
-    name: 'Fall of the First Empire', book: 2, mode: 'recounted', told: 'Duiker', date: { bucket: 'ancient' },
-    participants: [['Seven Cities']],
-  },
-  {
-    name: "Kellanved's Ascension", book: 2, mode: 'recounted', date: null,
-    participants: [['Malazan Empire']],
+    name: 'Betrayal of Coll', mode: 'recounted', told: 'Rallick Nom', date: null,
+    participants: [['Coll', 'victim'], ['Darujhistan']],
   },
 ];
 
@@ -147,7 +130,7 @@ export async function loadMalazanSample(): Promise<number> {
   }
   const seriesId = await rpc('createSeries', {
     name: SERIES,
-    description: 'Sample data from Books 1–2 (Gardens of the Moon, Deadhouse Gates).',
+    description: 'Sample data from Book 1, Gardens of the Moon.',
   });
   const bookIds: number[] = [];
   for (const title of BOOKS) bookIds.push(await rpc('addBook', seriesId, title));
