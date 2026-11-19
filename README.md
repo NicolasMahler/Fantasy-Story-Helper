@@ -18,5 +18,5 @@ npm run build    # production build + service worker
 - `docs/specs/`, `docs/plans/`: design and plan documents.
 
 ## Status
-Step 1 of the handoff build order is done: the data layer, export/import, and the app shell.
-Next is step 2: book CRUD, entity types, and entity CRUD with `@` linking and backlinks.
+Steps 1–2 of the handoff build order are done: data layer, export/import, app shell; books, entity types (custom types + fields), entries with `@` linking and backlinks.
+Next is step 3: events (present/recounted, participants, dates and sort keys).

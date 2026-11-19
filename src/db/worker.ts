@@ -2,7 +2,7 @@
 import sqlite3InitModule from '@sqlite.org/sqlite-wasm';
 import type { SqlDb } from './types';
 import { migrate } from './migrations';
-import { createSeries, deleteSeries } from './seed';
+import { api } from './api';
 import { dumpJson } from './dump';
 import type { InitInfo, Ops, OpName, Request, Response, StorageMode } from './protocol';
 
@@ -104,8 +104,11 @@ const handlers: { [K in OpName]: (...args: Ops[K][0]) => Ops[K][1] | Promise<Ops
   init,
   query: (sql, params) => db.query(sql, params),
   exec: (sql, params) => db.exec(sql, params),
-  createSeries: (input) => createSeries(db, input),
-  deleteSeries: (id) => deleteSeries(db, id),
+  api: (name, args) => {
+    if (!Object.hasOwn(api, name)) throw new Error(`Unknown api call: ${name}`);
+    const fn = (api as Record<string, (db: SqlDb, ...a: unknown[]) => unknown>)[name];
+    return fn(db, ...args);
+  },
   exportSqlite: () => sqlite3.capi.sqlite3_js_db_export(raw),
   exportJson: () => dumpJson(db),
   importSqlite,

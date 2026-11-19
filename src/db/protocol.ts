@@ -17,8 +17,7 @@ export interface Ops {
   init: [[], InitInfo];
   query: [[sql: string, params?: unknown[]], Record<string, unknown>[]];
   exec: [[sql: string, params?: unknown[]], void];
-  createSeries: [[input: { name: string; description?: string }], number];
-  deleteSeries: [[id: number], void];
+  api: [[name: string, args: unknown[]], unknown];
   exportSqlite: [[], Uint8Array];
   exportJson: [[], JsonDump];
   importSqlite: [[bytes: Uint8Array], InitInfo];

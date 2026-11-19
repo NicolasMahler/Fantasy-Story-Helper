@@ -1,4 +1,5 @@
 import type { Ops, OpName, Request, Response, InitInfo } from './protocol';
+import type { ApiName, ApiArgs, ApiResult } from './api';
 
 const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
 const pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
@@ -38,8 +39,6 @@ export const db = {
   query: <T = Record<string, unknown>>(sql: string, params?: unknown[]) =>
     call('query', sql, params) as Promise<T[]>,
   exec: (sql: string, params?: unknown[]) => call('exec', sql, params),
-  createSeries: (input: { name: string; description?: string }) => call('createSeries', input),
-  deleteSeries: (id: number) => call('deleteSeries', id),
   exportSqlite: () => call('exportSqlite'),
   exportJson: () => call('exportJson'),
   importSqlite: (bytes: Uint8Array) => call('importSqlite', bytes),
@@ -52,4 +51,9 @@ async function requestPersistence(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Typed call to any domain function in src/db/api.ts, run inside the worker. */
+export function rpc<K extends ApiName>(name: K, ...args: ApiArgs<K>): Promise<ApiResult<K>> {
+  return call('api', name, args as unknown[]) as Promise<ApiResult<K>>;
 }

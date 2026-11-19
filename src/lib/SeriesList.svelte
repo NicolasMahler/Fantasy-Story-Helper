@@ -1,13 +1,7 @@
 <script lang="ts">
-  import { db } from '../db/client';
-
-  interface SeriesRow {
-    id: number;
-    name: string;
-    description: string;
-    books: number;
-    entities: number;
-  }
+  import { rpc } from '../db/client';
+  import type { SeriesRow } from '../db/series';
+  import { href } from './route';
 
   let series = $state<SeriesRow[]>([]);
   let name = $state('');
@@ -16,11 +10,7 @@
   let error = $state<string | null>(null);
 
   async function load() {
-    series = await db.query<SeriesRow>(`
-      SELECT s.id, s.name, s.description,
-             (SELECT COUNT(*) FROM book b WHERE b.series_id = s.id)   AS books,
-             (SELECT COUNT(*) FROM entity e WHERE e.series_id = s.id) AS entities
-      FROM series s ORDER BY s.name COLLATE NOCASE`);
+    series = await rpc('listSeries');
   }
 
   async function create(ev: SubmitEvent) {
@@ -28,21 +18,13 @@
     busy = true;
     error = null;
     try {
-      await db.createSeries({ name, description });
-      name = '';
-      description = '';
-      await load();
+      const id = await rpc('createSeries', { name, description });
+      location.hash = href({ name: 'series', seriesId: id, tab: 'entries' });
     } catch (e) {
       error = (e as Error).message;
     } finally {
       busy = false;
     }
-  }
-
-  async function remove(s: SeriesRow) {
-    if (!confirm(`Delete “${s.name}” and everything in it? This can't be undone.`)) return;
-    await db.deleteSeries(s.id);
-    await load();
   }
 
   load();
@@ -55,32 +37,26 @@
 {:else}
   <ul class="list">
     {#each series as s (s.id)}
-      <li class="card">
-        <div>
+      <li>
+        <a class="card item" href={href({ name: 'series', seriesId: s.id, tab: 'entries' })}>
           <strong>{s.name}</strong>
-          {#if s.description}<p class="muted">{s.description}</p>{/if}
-          <small class="muted">{s.books} books · {s.entities} entries</small>
-        </div>
-        <button class="danger" onclick={() => remove(s)} aria-label={`Delete ${s.name}`}>Delete</button>
+          {#if s.description}<span class="muted">{s.description}</span>{/if}
+          <small class="muted">{s.books} {s.books === 1 ? 'book' : 'books'} · {s.entities} {s.entities === 1 ? 'entry' : 'entries'}</small>
+        </a>
       </li>
     {/each}
   </ul>
 {/if}
 
-<form class="card" onsubmit={create}>
+<form class="card stack" onsubmit={create}>
   <h2>New series</h2>
   <label>Name <input bind:value={name} required placeholder="e.g. The Wheel of Ages" /></label>
   <label>Description <textarea bind:value={description} rows="2"></textarea></label>
   {#if error}<p class="error">{error}</p>{/if}
-  <button class="primary" disabled={busy || !name.trim()}>Create series</button>
+  <div><button class="primary" disabled={busy || !name.trim()}>Create series</button></div>
 </form>
 
 <style>
-  .list { list-style: none; padding: 0; display: grid; gap: 0.75rem; margin: 0 0 1.5rem; }
-  .list li { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-  .list p { margin: 0.25rem 0; }
-  form { display: grid; gap: 0.75rem; }
-  form h2 { margin: 0; font-size: 1.1rem; }
-  label { display: grid; gap: 0.25rem; font-size: 0.9rem; }
-  .error { color: var(--danger); margin: 0; }
+  .item { display: grid; gap: 0.15rem; text-decoration: none; color: inherit; }
+  .item:hover { border-color: var(--accent); }
 </style>
