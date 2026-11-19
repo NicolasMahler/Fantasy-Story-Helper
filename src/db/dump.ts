@@ -44,6 +44,6 @@ export function dumpJson(db: SqlDb, seriesId?: number): JsonDump {
     exportedAt: new Date().toISOString(),
     tables,
   };
-  if (seriesId !== undefined) dump.seriesName = (tables.series[0]?.name as string | undefined) ?? undefined;
+  if (seriesId !== undefined) dump.seriesName = tables.series[0]?.name as string | undefined;
   return dump;
 }

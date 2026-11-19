@@ -36,6 +36,7 @@ export const db = {
     const [info, persisted] = await Promise.all([call('init'), requestPersistence()]);
     return { ...info, persisted };
   },
+  /** Raw SQL, for the dev console only (`window.db` in main.ts). App code goes through `rpc`. */
   query: <T = Record<string, unknown>>(sql: string, params?: unknown[]) =>
     call('query', sql, params) as Promise<T[]>,
   exec: (sql: string, params?: unknown[]) => call('exec', sql, params),

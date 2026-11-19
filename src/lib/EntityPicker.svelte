@@ -1,6 +1,7 @@
 <script lang="ts">
   import { rpc } from '../db/client';
   import type { EntityListItem } from '../db/entities';
+  import { listKey } from './forms';
 
   let {
     seriesId,
@@ -42,12 +43,12 @@
   }
 
   function onkeydown(ev: KeyboardEvent) {
-    if (!open || results.length === 0) return;
-    if (ev.key === 'ArrowDown') active = (active + 1) % results.length;
-    else if (ev.key === 'ArrowUp') active = (active - 1 + results.length) % results.length;
-    else if (ev.key === 'Enter') pick(results[active]);
-    else if (ev.key === 'Escape') open = false;
-    else return;
+    if (!open) return;
+    const r = listKey(ev.key, active, results.length);
+    if (r === null) return;
+    if (r === 'pick') pick(results[active]);
+    else if (r === 'close') open = false;
+    else active = r;
     ev.preventDefault();
   }
 </script>

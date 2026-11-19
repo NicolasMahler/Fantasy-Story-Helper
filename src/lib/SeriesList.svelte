@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { plural } from './text';
   import { rpc } from '../db/client';
   import type { SeriesRow } from '../db/series';
   import { href } from './route';
@@ -52,7 +53,7 @@
         <a class="card item" href={href({ name: 'series', seriesId: s.id, tab: 'entries' })}>
           <strong>{s.name}</strong>
           {#if s.description}<span class="muted">{s.description}</span>{/if}
-          <small class="muted">{s.books} {s.books === 1 ? 'book' : 'books'} · {s.entities} {s.entities === 1 ? 'entry' : 'entries'}</small>
+          <small class="muted">{plural(s.books, 'book')} · {plural(s.entities, 'entry', 'entries')}</small>
         </a>
       </li>
     {/each}

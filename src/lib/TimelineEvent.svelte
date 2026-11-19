@@ -16,7 +16,7 @@
       recounted ? (event.toldBy ? `Told by ${event.toldBy.name}` : 'Recounted') : null,
       showBook && event.bookNumber ? `Bk ${event.bookNumber}` : null,
       event.participants.length ? `${event.participants.length} involved` : null,
-      event.label.endsWith('(pinned)') ? '📌 pinned' : null,
+      event.pinned ? '📌 pinned' : null,
     ].filter(Boolean).join(' · '),
   );
 </script>

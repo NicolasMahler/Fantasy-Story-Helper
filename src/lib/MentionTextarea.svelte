@@ -4,6 +4,7 @@
   import { parseAtQuery, formatMention, type AtQuery } from '../db/mentions';
   import type { EntityListItem } from '../db/entities';
   import type { EntityTypeRow } from '../db/entityTypes';
+  import { attempt, listKey } from './forms';
 
   let {
     value = $bindable(''),
@@ -75,13 +76,9 @@
 
   async function create() {
     if (!query || createTypeId === null) return;
-    try {
-      const name = query.term.trim();
-      const newId = await rpc('createEntity', { seriesId, typeId: createTypeId, name });
-      await insert(name, newId);
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    const name = query.term.trim();
+    const typeId = createTypeId;
+    await attempt(async () => insert(name, await rpc('createEntity', { seriesId, typeId, name })), (m) => (error = m));
   }
 
   function onkeydown(ev: KeyboardEvent) {
@@ -98,11 +95,11 @@
       }
       return;
     }
-    if (ev.key === 'ArrowDown') active = (active + 1) % optionCount;
-    else if (ev.key === 'ArrowUp') active = (active - 1 + optionCount) % optionCount;
-    else if (ev.key === 'Enter' || ev.key === 'Tab') choose(active);
-    else if (ev.key === 'Escape') query = null;
-    else return;
+    const r = listKey(ev.key, active, optionCount, { pickOnTab: true });
+    if (r === null) return;
+    if (r === 'pick') choose(active);
+    else if (r === 'close') query = null;
+    else active = r;
     ev.preventDefault();
   }
 </script>

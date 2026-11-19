@@ -3,6 +3,7 @@
   import { rpc } from '../db/client';
   import type { SearchResult } from '../db/search';
   import { href } from './route';
+  import { listKey } from './forms';
 
   let { open = $bindable(false), seriesId }: { open: boolean; seriesId: number | null } = $props();
 
@@ -52,11 +53,11 @@
   }
 
   function onkeydown(ev: KeyboardEvent) {
-    if (ev.key === 'Escape') open = false;
-    else if (ev.key === 'ArrowDown' && results.length) active = (active + 1) % results.length;
-    else if (ev.key === 'ArrowUp' && results.length) active = (active - 1 + results.length) % results.length;
-    else if (ev.key === 'Enter' && results[active]) go(results[active]);
-    else return;
+    const r = listKey(ev.key, active, results.length);
+    if (r === null) return;
+    if (r === 'close') open = false;
+    else if (r === 'pick') go(results[active]);
+    else active = r;
     ev.preventDefault();
   }
 

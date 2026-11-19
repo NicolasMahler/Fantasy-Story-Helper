@@ -16,6 +16,8 @@ export interface TimelineEvent {
   name: string;
   mode: EventMode;
   effectiveKey: number | null;
+  /** Position set by hand (sort_key_override) rather than computed from the date. */
+  pinned: boolean;
   manualOrder: number;
   bookId: number | null;
   bookNumber: number | null;
@@ -93,6 +95,7 @@ export function getTimeline(db: SqlDb, seriesId: number): TimelineData {
       name: r.name,
       mode: r.mode,
       effectiveKey: key,
+      pinned: r.sort_key_override !== null,
       manualOrder: r.manual_order,
       bookId: r.book_id,
       bookNumber: r.b_number,

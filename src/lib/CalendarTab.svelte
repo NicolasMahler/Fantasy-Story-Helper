@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { plural } from './text';
   import { rpc } from '../db/client';
   import type { AgeRow, AgeInput, BucketRow } from '../db/calendar';
   import { attempt, numOrNull } from './forms';
@@ -92,7 +93,7 @@
           <div class="row">
             <div class="grow">
               <strong>{a.name}</strong>
-              <small class="muted">{range(a)} · counts {a.direction === 'forward' ? 'up' : 'down'} · {a.usage} {a.usage === 1 ? 'event' : 'events'}</small>
+              <small class="muted">{range(a)} · counts {a.direction === 'forward' ? 'up' : 'down'} · {plural(a.usage, 'event')}</small>
             </div>
             <button class="ghost" onclick={() => open(a)}>Edit</button>
           </div>
@@ -120,7 +121,7 @@
             <label class="pos">Position <input type="number" step="any" bind:value={bucketDrafts[b.bucket].sortKey} /></label>
             <button class="ghost save">Save</button>
           </form>
-          <small class="muted">{b.bucket} · {b.usage} {b.usage === 1 ? 'event' : 'events'}</small>
+          <small class="muted">{b.bucket} · {plural(b.usage, 'event')}</small>
         </li>
       {/if}
     {/each}

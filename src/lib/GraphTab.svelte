@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { plural } from './text';
   import { onDestroy } from 'svelte';
   import {
     forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY,
@@ -157,9 +158,12 @@
       : [],
   );
 
-  const dim = (e: ModelEdge) =>
-    (neighbours && !(neighbours.has(e.a) && neighbours.has(e.b) && (e.a === (selected as { id: number }).id || e.b === (selected as { id: number }).id)))
-    || (selectedEdge && selectedEdge.key !== e.key);
+  /** With a node selected, dim edges not touching it; with an edge selected, dim the others. */
+  const dim = (e: ModelEdge) => {
+    const id = selected?.kind === 'node' ? selected.id : null;
+    if (id !== null) return e.a !== id && e.b !== id;
+    return !!selectedEdge && selectedEdge.key !== e.key;
+  };
 
   function curve(e: ModelEdge) {
     const p = pos.get(e.a), q = pos.get(e.b);
@@ -198,7 +202,7 @@
       {/if}
       <label class="slider">Hide ties under
         <input type="range" min="1" max="5" bind:value={minShared} aria-label="Minimum shared events" />
-        <span>{minShared} {minShared === 1 ? 'event' : 'events'}</span>
+        <span>{plural(minShared, 'event')}</span>
       </label>
       <label class="check"><input type="checkbox" bind:checked={showLinks} /> Relationships</label>
     </div>
@@ -269,8 +273,8 @@
         {@const b = nodeById.get(selectedEdge.b)!}
         <h3>{a.icon} {a.name} ↔ {b.icon} {b.name}</h3>
         <p class="sub">
-          {selectedEdge.shared.length} shared {selectedEdge.shared.length === 1 ? 'event' : 'events'}{bookId ? ' in this book' : ''}
-          · {selectedEdge.links.length ? `${selectedEdge.links.length} relationship${selectedEdge.links.length === 1 ? '' : 's'}` : 'no hand-made relationship'}
+          {plural(selectedEdge.shared.length, 'shared event')}{bookId ? ' in this book' : ''}
+          · {selectedEdge.links.length ? plural(selectedEdge.links.length, 'relationship') : 'no hand-made relationship'}
         </p>
         {#each selectedEdge.links as l (l.id)}
           <div class="relline">{nodeById.get(l.from)?.name} <b>{l.kind}</b> {nodeById.get(l.to)?.name}</div>
@@ -288,7 +292,7 @@
         <a class="action" href={href({ name: 'entity', seriesId, entityId: a.id })}>+ Add a relationship (on {a.name}'s page)</a>
       {:else if selectedNode}
         <h3>{selectedNode.icon} {selectedNode.name}</h3>
-        <p class="sub">{selectedNode.degree} {selectedNode.degree === 1 ? 'connection' : 'connections'}</p>
+        <p class="sub">{plural(selectedNode.degree, 'connection')}</p>
         <ul>
           {#each nodeEdges as { edge, other } (edge.key)}
             <li>

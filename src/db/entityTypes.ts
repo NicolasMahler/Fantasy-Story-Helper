@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { plural, slugify as slugifyText } from '../lib/text';
 import { insertId } from './sql';
 
 export type FieldKind = 'text' | 'longtext' | 'number';
@@ -34,15 +35,8 @@ export interface TypeInput {
   fields: FieldDef[];
 }
 
-export function slugify(s: string): string {
-  const slug = s
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return slug || 'type';
-}
+/** Slug for type and field keys; falls back to 'type'. */
+export const slugify = (s: string): string => slugifyText(s, 'type');
 
 export function listTypes(db: SqlDb, seriesId: number): EntityTypeRow[] {
   return db
@@ -104,6 +98,6 @@ export function deleteType(db: SqlDb, id: number): void {
   );
   if (!t) return;
   if (t.is_builtin) throw new Error('The built-in Event type cannot be deleted.');
-  if (t.usage > 0) throw new Error(`This type is in use by ${t.usage} ${t.usage === 1 ? 'entry' : 'entries'}.`);
+  if (t.usage > 0) throw new Error(`This type is in use by ${plural(t.usage, 'entry', 'entries')}.`);
   db.exec('DELETE FROM entity_type WHERE id = ?', [id]);
 }

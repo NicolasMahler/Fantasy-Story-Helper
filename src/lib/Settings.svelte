@@ -6,6 +6,7 @@
   import { install, promptInstall } from './install.svelte';
   import { timeAgo } from './timeAgo';
   import { attempt } from './forms';
+  import { slugify } from './text';
 
   let { info = $bindable() }: { info: StartupInfo } = $props();
 
@@ -45,8 +46,8 @@
   const exportSeries = () => attempt(async () => {
     if (seriesToExport === null) return;
     const dump = await db.exportJson(seriesToExport);
-    const slug = (dump.seriesName ?? 'series').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    download(JSON.stringify(dump, null, 2), `${slug || 'series'}-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
+    const slug = slugify(dump.seriesName ?? '', 'series');
+    download(JSON.stringify(dump, null, 2), `${slug}-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
     status = `“${dump.seriesName}” exported. Import it elsewhere with “Add as new series”.`;
   }, exportFailed);
 
@@ -85,7 +86,7 @@
       const r = await db.importJson(raw, jsonMode);
       status = r.mode === 'replace'
         ? 'Import complete. Your data was replaced.'
-        : `Added ${r.seriesIds.length} ${r.seriesIds.length === 1 ? 'series' : 'series'} to your library.`;
+        : `Added ${r.seriesIds.length} series to your library.`;
       await refresh();
     } catch (e) {
       status = `Import failed, and your existing data is unchanged. ${(e as Error).message}`;

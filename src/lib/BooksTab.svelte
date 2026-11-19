@@ -1,6 +1,7 @@
 <script lang="ts">
   import { rpc } from '../db/client';
   import type { BookRow } from '../db/books';
+  import { attempt } from './forms';
 
   let { seriesId, onchange }: { seriesId: number; onchange?: () => void } = $props();
 
@@ -17,12 +18,10 @@
 
   async function run(fn: () => Promise<unknown>) {
     error = null;
-    try {
+    await attempt(async () => {
       await fn();
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   function add(ev: SubmitEvent) {

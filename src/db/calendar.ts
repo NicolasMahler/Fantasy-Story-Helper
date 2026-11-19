@@ -1,5 +1,6 @@
 import type { SqlDb } from './types';
 import { insertId } from './sql';
+import { plural } from '../lib/text';
 import { recomputeSeries } from './events';
 
 export interface AgeRow {
@@ -68,7 +69,7 @@ export function updateAge(db: SqlDb, id: number, input: AgeInput): void {
 
 export function deleteAge(db: SqlDb, id: number): void {
   const [n] = db.query<{ n: number }>('SELECT COUNT(*) AS n FROM event WHERE age_id = ?', [id]);
-  if (n.n > 0) throw new Error(`This age is used by ${n.n} ${n.n === 1 ? 'event' : 'events'}. Re-date them first.`);
+  if (n.n > 0) throw new Error(`This age is used by ${plural(n.n, 'event')}. Re-date them first.`);
   db.exec('DELETE FROM age WHERE id = ?', [id]);
 }
 

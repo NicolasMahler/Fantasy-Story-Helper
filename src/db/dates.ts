@@ -1,5 +1,7 @@
 /** Pure date logic: sort keys on the master axis (years), cycle checks, and display labels. */
 
+import { plural } from '../lib/text';
+
 export type DatePrecision = 'year' | 'age' | 'relative' | 'bucket';
 export const DATE_PRECISIONS: { value: DatePrecision | null; label: string }[] = [
   { value: null, label: 'Undated' },
@@ -102,8 +104,6 @@ export function wouldCreateCycle(events: Map<number, EventDate>, id: number, tar
   }
   return false;
 }
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /** Human label: "Year 312, Third Age", "5 years after X", "Long ago", "Undated"… */
 export function formatDate(
