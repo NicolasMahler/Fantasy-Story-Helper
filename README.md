@@ -22,3 +22,10 @@ All six steps of the handoff build order are done: data layer, export/import, ap
 Remaining open idea from the handoff: a per-book notes feature (not in the schema yet).
 
 Dev sample: run `await loadMalazanSample()` in the browser console (dev server only). It is extended after every step.
+
+## Deploying (GitHub Pages)
+`.github/workflows/deploy.yml` tests, builds and publishes on every push to `main`
+(repository setting: Settings → Pages → Source: **GitHub Actions**). The site is served under `/<repo-name>/`;
+the workflow passes that as `BASE_PATH`. To try a sub-path build locally from Git Bash:
+`MSYS_NO_PATHCONV=1 BASE_PATH=/fantasy-helper/ npm run build && npx vite preview`.
+Each address (localhost, the Pages URL, each device) has its own separate library; move data with Export/Import.

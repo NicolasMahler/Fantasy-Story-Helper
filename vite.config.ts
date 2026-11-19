@@ -4,6 +4,8 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // GitHub Pages serves the site under /<repo-name>/; the deploy workflow sets BASE_PATH. Locally it is "/".
+  base: process.env.BASE_PATH ?? "/",
   plugins: [
     svelte(),
     VitePWA({
