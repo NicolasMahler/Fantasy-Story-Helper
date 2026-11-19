@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Node 22 ships npm 10, which rejects this lock file (it wrongly requires peers of a wasm32-only
+      # optional package). npm 11 matches the version that generated the lock.
+      - run: npm install -g npm@11.6.2
       - run: npm ci
       - run: npm test
       - run: npm run build
