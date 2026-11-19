@@ -6,6 +6,8 @@ import { listTypes, createType, updateType, deleteType } from './entityTypes';
 import {
   createEntity, updateEntity, deleteEntity, getEntity, listEntities, searchEntities, backlinks,
 } from './entities';
+import { getEventDetail, saveEvent, addParticipant, updateParticipantRole, removeParticipant, eventsForEntity } from './events';
+import { listAges, createAge, updateAge, deleteAge, listBuckets, updateBucket } from './calendar';
 
 /** Every domain function the UI may call through the worker. Each takes the db first. */
 export const api = {
@@ -13,6 +15,8 @@ export const api = {
   listBooks, addBook, updateBook, moveBook, deleteBook,
   listTypes, createType, updateType, deleteType,
   createEntity, updateEntity, deleteEntity, getEntity, listEntities, searchEntities, backlinks,
+  getEventDetail, saveEvent, addParticipant, updateParticipantRole, removeParticipant, eventsForEntity,
+  listAges, createAge, updateAge, deleteAge, listBuckets, updateBucket,
 };
 
 export type Api = typeof api;

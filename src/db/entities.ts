@@ -1,6 +1,7 @@
 import type { SqlDb } from './types';
 import type { FieldDef } from './entityTypes';
 import { parseMentionIds } from './mentions';
+import { freezeDependents, recomputeSeries } from './events';
 
 export type Attributes = Record<string, string | number>;
 
@@ -109,16 +110,26 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
       const isEvent = typeKey(db, cur.series_id, patch.typeId) === 'event';
       set('type_id', patch.typeId);
       if (isEvent && !wasEvent) db.exec('INSERT OR IGNORE INTO event (entity_id) VALUES (?)', [id]);
-      if (wasEvent && !isEvent) db.exec('DELETE FROM event WHERE entity_id = ?', [id]);
+      if (wasEvent && !isEvent) {
+        freezeDependents(db, id);
+        db.exec('DELETE FROM event WHERE entity_id = ?', [id]);
+      }
     }
     sets.push(`updated_at = datetime('now')`);
     db.exec(`UPDATE entity SET ${sets.join(', ')} WHERE id = ?`, [...params, id]);
     if (patch.description !== undefined) rebuildMentions(db, id, cur.series_id, patch.description);
+    recomputeSeries(db, cur.series_id);
   });
 }
 
 export function deleteEntity(db: SqlDb, id: number): void {
-  db.exec('DELETE FROM entity WHERE id = ?', [id]);
+  db.transaction(() => {
+    const [cur] = db.query<{ series_id: number }>('SELECT series_id FROM entity WHERE id = ?', [id]);
+    if (!cur) return;
+    freezeDependents(db, id);
+    db.exec('DELETE FROM entity WHERE id = ?', [id]);
+    recomputeSeries(db, cur.series_id);
+  });
 }
 
 export function getEntity(db: SqlDb, id: number): EntityDetail | null {

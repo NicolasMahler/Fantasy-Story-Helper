@@ -57,6 +57,54 @@ const ENTRIES: Sample[] = [
   // Events
   { type: 'event', name: 'Siege of Pale', description: 'The {{Malazan Empire}} takes {{Pale}} and drives off {{Moon\'s Spawn}}, at a terrible cost to the {{Bridgeburners}} and the cadre mages.' },
   { type: 'event', name: 'Fête of Gedderone', description: 'Spring festival in {{Darujhistan}} where the city\'s plots — and {{Anomander Rake}}, {{Kalam}} and {{Rallick Nom}} — collide.' },
+  { type: 'event', name: 'T\'lan Imass–Jaghut Wars', description: 'The ancient war of extermination waged by the {{T\'lan Imass}} against the {{Jaghut}}, as {{Tool}} remembers it.' },
+  { type: 'event', name: 'Imprisonment of the Jaghut Tyrant', description: 'Long ago, a {{Jaghut Tyrant}} was sealed in a barrow in the {{Gadrobi Hills}}.' },
+  { type: 'event', name: 'Release of the Jaghut Tyrant', description: '{{Adjunct Lorn}} and {{Tool}} free the {{Jaghut Tyrant}} to unleash him on {{Darujhistan}}.' },
+];
+
+/**
+ * Step 3: event details. Dates are approximate and only for exercising the app.
+ * `relative` names another event; `told` is the teller of a recounted event.
+ */
+type EventSample = {
+  name: string;
+  mode?: 'present' | 'recounted';
+  told?: string;
+  date:
+    | { year: number; age?: string }
+    | { bucket: string }
+    | { relative: string; offset: number };
+  participants: [name: string, role?: string][];
+};
+
+const AGES = [{ name: 'Burn\'s Sleep', startYear: 0, endYear: null, direction: 'forward' as const }];
+
+const EVENTS: EventSample[] = [
+  {
+    name: 'T\'lan Imass–Jaghut Wars', mode: 'recounted', told: 'Tool', date: { bucket: 'ancient' },
+    participants: [['T\'lan Imass'], ['Jaghut']],
+  },
+  {
+    name: 'Imprisonment of the Jaghut Tyrant', mode: 'recounted', told: 'Tool', date: { bucket: 'distant' },
+    participants: [['Jaghut Tyrant', 'victim'], ['Gadrobi Hills']],
+  },
+  {
+    name: 'Siege of Pale', date: { year: 1163, age: 'Burn\'s Sleep' },
+    participants: [
+      ['Whiskeyjack', 'leader'], ['Quick Ben'], ['Kalam'], ['Tattersail'], ['Hairlock'], ['Anomander Rake'],
+      ['Bridgeburners'], ['Malazan Empire'], ['Moon\'s Spawn'], ['Pale'],
+    ],
+  },
+  {
+    name: 'Fête of Gedderone', date: { relative: 'Siege of Pale', offset: 1 },
+    participants: [
+      ['Anomander Rake'], ['Kalam'], ['Rallick Nom'], ['Crokus Younghand'], ['Kruppe'], ['Baruk'], ['Darujhistan'],
+    ],
+  },
+  {
+    name: 'Release of the Jaghut Tyrant', date: { relative: 'Fête of Gedderone', offset: 0 },
+    participants: [['Adjunct Lorn', 'leader'], ['Tool'], ['Jaghut Tyrant'], ['Gadrobi Hills']],
+  },
 ];
 
 /** Creates the sample series. Refuses to run if a series with the same name already exists. Returns the series id. */
@@ -87,6 +135,32 @@ export async function loadMalazanSample(): Promise<number> {
       return `@[${name}](${id})`;
     });
     await rpc('updateEntity', ids.get(e.name)!, { description });
+  }
+
+  // Pass 3 (step 3): ages, event dates (in dependency order as listed), participants.
+  const ageIds = new Map<string, number>();
+  for (const a of AGES) ageIds.set(a.name, await rpc('createAge', seriesId, a));
+  const id = (name: string) => {
+    const v = ids.get(name);
+    if (v === undefined) throw new Error(`Unknown entry "${name}".`);
+    return v;
+  };
+  for (const ev of EVENTS) {
+    const d = ev.date;
+    await rpc('saveEvent', id(ev.name), {
+      mode: ev.mode ?? 'present',
+      bookId,
+      toldById: ev.told ? id(ev.told) : null,
+      datePrecision: 'year' in d ? 'year' : 'bucket' in d ? 'bucket' : 'relative',
+      year: 'year' in d ? d.year : null,
+      ageId: 'year' in d && d.age ? ageIds.get(d.age)! : null,
+      relativeTo: 'relative' in d ? id(d.relative) : null,
+      offsetYears: 'relative' in d ? d.offset : null,
+      bucket: 'bucket' in d ? d.bucket : null,
+      sortKeyOverride: null,
+      manualOrder: 0,
+    });
+    for (const [name, role] of ev.participants) await rpc('addParticipant', id(ev.name), id(name), role);
   }
   return seriesId;
 }

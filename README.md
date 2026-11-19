@@ -18,5 +18,7 @@ npm run build    # production build + service worker
 - `docs/specs/`, `docs/plans/`: design and plan documents.
 
 ## Status
-Steps 1–2 of the handoff build order are done: data layer, export/import, app shell; books, entity types (custom types + fields), entries with `@` linking and backlinks.
-Next is step 3: events (present/recounted, participants, dates and sort keys).
+Steps 1–3 of the handoff build order are done: data layer, export/import, app shell; books, entity types, entries with `@` linking and backlinks; events (present/recounted, told by, participants), ages, vague dates and sort keys.
+Next is step 4: the timeline view.
+
+Dev sample: run `await loadMalazanSample()` in the browser console (dev server only). It is extended after every step.

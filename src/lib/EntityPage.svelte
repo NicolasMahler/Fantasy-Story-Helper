@@ -4,15 +4,23 @@
   import { href } from './route';
   import RichText from './RichText.svelte';
   import EntityForm from './EntityForm.svelte';
+  import EventPanel from './EventPanel.svelte';
+  import type { EntityEvent } from '../db/events';
 
   let { seriesId, entityId }: { seriesId: number; entityId: number } = $props();
 
   let entity = $state<EntityDetail | null | undefined>(undefined);
   let mentionedIn = $state<EntityListItem[]>([]);
+  let events = $state<EntityEvent[]>([]);
   let editing = $state(false);
+  /** Bumped after edits so the event panel reloads (e.g. type changed to/from Event). */
+  let version = $state(0);
 
   async function load() {
-    [entity, mentionedIn] = await Promise.all([rpc('getEntity', entityId), rpc('backlinks', entityId)]);
+    [entity, mentionedIn, events] = await Promise.all([
+      rpc('getEntity', entityId), rpc('backlinks', entityId), rpc('eventsForEntity', entityId),
+    ]);
+    version++;
   }
 
   async function remove() {
@@ -73,7 +81,22 @@
   </section>
 
   {#if entity.type.key === 'event'}
-    <p class="card muted">Dates, participants and the past/present toggle for events come in the next build step.</p>
+    {#key version}<EventPanel {seriesId} eventId={entityId} />{/key}
+  {/if}
+
+  {#if events.length}
+    <section>
+      <h2>Events</h2>
+      <ul class="list compact">
+        {#each events as ev, i (`${ev.eventId}:${ev.role}:${i}`)}
+          <li class="ev" class:recounted={ev.mode === 'recounted'}>
+            <span class="marker" aria-hidden="true">{ev.mode === 'present' ? '●' : '◌'}</span>
+            <a href={href({ name: 'entity', seriesId, entityId: ev.eventId })}>{ev.name}</a>
+            <small class="muted">{ev.label}{ev.bookNumber ? ` · Book ${ev.bookNumber}` : ''}{ev.role !== 'participant' ? ` · ${ev.role}` : ''}</small>
+          </li>
+        {/each}
+      </ul>
+    </section>
   {/if}
 
   <section>
@@ -107,5 +130,9 @@
   .pre { white-space: pre-wrap; }
   section { margin: 1.5rem 0; }
   h2 { font-size: 1.1rem; }
+  .ev { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+  .marker { color: var(--accent); }
+  .recounted .marker { color: var(--muted); }
+  .recounted a { font-style: italic; }
   @media (max-width: 480px) { .fields { grid-template-columns: 1fr; } }
 </style>

@@ -1,0 +1,95 @@
+<script lang="ts">
+  import { rpc } from '../db/client';
+  import type { EntityListItem } from '../db/entities';
+
+  let {
+    seriesId,
+    onpick,
+    typeKey = null,
+    exclude = [],
+    placeholder = 'Search entries…',
+    label,
+  }: {
+    seriesId: number;
+    onpick: (item: EntityListItem) => void;
+    /** Restrict to one type, e.g. 'event'. */
+    typeKey?: string | null;
+    exclude?: number[];
+    placeholder?: string;
+    label: string;
+  } = $props();
+
+  const listId = $props.id();
+  let term = $state('');
+  let results = $state<EntityListItem[]>([]);
+  let open = $state(false);
+  let active = $state(0);
+  let seq = 0;
+
+  async function search() {
+    const mine = ++seq;
+    const found = await rpc('searchEntities', seriesId, typeKey, term, 12);
+    if (mine !== seq) return;
+    results = found.filter((r) => !exclude.includes(r.id));
+    active = 0;
+    open = true;
+  }
+
+  function pick(item: EntityListItem) {
+    onpick(item);
+    term = '';
+    open = false;
+  }
+
+  function onkeydown(ev: KeyboardEvent) {
+    if (!open || results.length === 0) return;
+    if (ev.key === 'ArrowDown') active = (active + 1) % results.length;
+    else if (ev.key === 'ArrowUp') active = (active - 1 + results.length) % results.length;
+    else if (ev.key === 'Enter') pick(results[active]);
+    else if (ev.key === 'Escape') open = false;
+    else return;
+    ev.preventDefault();
+  }
+</script>
+
+<div class="picker">
+  <input
+    type="search"
+    bind:value={term}
+    {placeholder}
+    aria-label={label}
+    oninput={search}
+    onfocus={search}
+    {onkeydown}
+    onblur={() => setTimeout(() => (open = false), 150)}
+    role="combobox"
+    aria-expanded={open}
+    aria-controls={listId}
+    aria-autocomplete="list"
+  />
+  {#if open}
+    <ul class="popup" role="listbox" id={listId}>
+      {#each results as r, i (r.id)}
+        <li role="option" aria-selected={i === active}>
+          <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => pick(r)}>
+            <span aria-hidden="true">{r.icon}</span> {r.name} <small class="muted">{r.type_name}</small>
+          </button>
+        </li>
+      {:else}
+        <li class="muted empty">No matches</li>
+      {/each}
+    </ul>
+  {/if}
+</div>
+
+<style>
+  .picker { position: relative; flex: 1 1 12rem; min-width: 0; }
+  .popup {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 10; margin: 4px 0 0; padding: 4px;
+    list-style: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.2); max-height: 16rem; overflow-y: auto;
+  }
+  li button { width: 100%; text-align: left; border: none; background: none; min-height: 40px; }
+  [aria-selected='true'] button { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+  .empty { padding: 0.5rem; }
+</style>

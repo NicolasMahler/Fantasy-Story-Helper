@@ -5,6 +5,7 @@
   import EntriesTab from './EntriesTab.svelte';
   import BooksTab from './BooksTab.svelte';
   import TypesTab from './TypesTab.svelte';
+  import CalendarTab from './CalendarTab.svelte';
 
   let { seriesId, tab }: { seriesId: number; tab: SeriesTab } = $props();
 
@@ -48,6 +49,7 @@
     { id: 'entries', label: 'Entries' },
     { id: 'books', label: 'Books' },
     { id: 'types', label: 'Types' },
+    { id: 'calendar', label: 'Calendar' },
   ];
 
   load();
@@ -86,6 +88,8 @@
     <EntriesTab {seriesId} />
   {:else if tab === 'books'}
     <BooksTab {seriesId} onchange={load} />
+  {:else if tab === 'calendar'}
+    <CalendarTab {seriesId} />
   {:else}
     <TypesTab {seriesId} />
   {/if}

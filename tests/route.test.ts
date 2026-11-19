@@ -9,6 +9,7 @@ describe('parseRoute', () => {
     expect(parseRoute('#/s/4')).toEqual({ name: 'series', seriesId: 4, tab: 'entries' });
     expect(parseRoute('#/s/4/books')).toEqual({ name: 'series', seriesId: 4, tab: 'books' });
     expect(parseRoute('#/s/4/types')).toEqual({ name: 'series', seriesId: 4, tab: 'types' });
+    expect(parseRoute('#/s/4/calendar')).toEqual({ name: 'series', seriesId: 4, tab: 'calendar' });
     expect(parseRoute('#/s/4/e/9')).toEqual({ name: 'entity', seriesId: 4, entityId: 9 });
     expect(parseRoute('#/s/4/new')).toEqual({ name: 'newEntity', seriesId: 4, typeId: null });
     expect(parseRoute('#/s/4/new/7')).toEqual({ name: 'newEntity', seriesId: 4, typeId: 7 });
