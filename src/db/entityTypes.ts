@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 
 export type FieldKind = 'text' | 'longtext' | 'number';
 export const FIELD_KINDS: { kind: FieldKind; label: string }[] = [
@@ -85,7 +86,7 @@ export function createType(db: SqlDb, seriesId: number, input: TypeInput): numbe
        VALUES (?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM entity_type WHERE series_id = ?))`,
       [seriesId, key, t.name, t.icon, t.color, JSON.stringify(t.fields), seriesId],
     );
-    return db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+    return insertId(db);
   });
 }
 

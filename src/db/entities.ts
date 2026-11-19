@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId, likeEscape } from './sql';
 import type { FieldDef } from './entityTypes';
 import { parseMentionIds } from './mentions';
 import { freezeDependents, recomputeSeries } from './events';
@@ -48,7 +49,6 @@ export interface EntityListItem {
   first_book_number: number | null;
 }
 
-const lastId = (db: SqlDb) => db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
 
 function cleanName(name: string): string {
   const n = name.trim();
@@ -84,7 +84,7 @@ export function createEntity(db: SqlDb, input: EntityInput): number {
       `INSERT INTO entity (series_id, type_id, name, description, first_book_id, attributes) VALUES (?, ?, ?, ?, ?, ?)`,
       [input.seriesId, input.typeId, name, description, input.firstBookId ?? null, JSON.stringify(input.attributes ?? {})],
     );
-    const id = lastId(db);
+    const id = insertId(db);
     if (key === 'event') db.exec('INSERT INTO event (entity_id) VALUES (?)', [id]); // rule 2
     rebuildMentions(db, id, input.seriesId, description);
     return id;
@@ -184,7 +184,6 @@ const LIST_SELECT = `
   SELECT e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color, b.number AS first_book_number
   FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id`;
 
-const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 export function listEntities(db: SqlDb, seriesId: number, filter: { typeId?: number | null; search?: string } = {}): EntityListItem[] {
   const where = ['e.series_id = ?'];

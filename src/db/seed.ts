@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 
 export interface DefaultEntityType {
   key: string;
@@ -37,7 +38,7 @@ export function createSeries(db: SqlDb, input: { name: string; description?: str
   if (!name) throw new Error('Series name is required.');
   return db.transaction(() => {
     db.exec('INSERT INTO series (name, description) VALUES (?, ?)', [name, input.description?.trim() ?? '']);
-    const id = db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+    const id = insertId(db);
     DEFAULT_ENTITY_TYPES.forEach((t, i) =>
       db.exec(
         'INSERT INTO entity_type (series_id, key, name, icon, color, is_builtin, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)',

@@ -1,8 +1,10 @@
 /** JSON import: replace everything, or add the file's series alongside existing data. */
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 import { currentVersion } from './migrations';
 import { DATA_TABLES, type DataTable, type JsonDump } from './dump';
 import { recomputeSeries } from './events';
+import { MENTION_RE } from './mentions';
 
 export type ImportMode = 'replace' | 'add';
 export interface ImportResult {
@@ -44,7 +46,7 @@ function insert(db: SqlDb, t: DataTable, row: Row, cols: Set<string>, skip: stri
     `INSERT INTO "${t}" (${keys.map((k) => `"${k}"`).join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
     keys.map((k) => row[k]),
   );
-  return db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+  return insertId(db);
 }
 
 /** Replace mode: wipe all user data and load the dump, atomically. App settings (app_meta) are kept. */
@@ -59,8 +61,6 @@ function importReplace(db: SqlDb, dump: JsonDump): ImportResult {
   }
   return { mode: 'replace', seriesIds: db.query<{ id: number }>('SELECT id FROM series ORDER BY id').map((r) => r.id) };
 }
-
-const MENTION_RE = /@\[([^\]\n]*)\]\((\d+)\)/g;
 
 /** Add mode: every series in the dump becomes a new series; all ids and references are remapped. */
 function importAdd(db: SqlDb, dump: JsonDump): ImportResult {

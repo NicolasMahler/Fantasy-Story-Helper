@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 
 /** Suggestions for the relationship kind field (free text is allowed). */
 export const LINK_KINDS = [
@@ -54,7 +55,7 @@ export function createLink(db: SqlDb, input: LinkInput): number {
        VALUES (?, ?, ?, ?, ?, ?)`,
       [input.fromId, input.toId, kind, (input.note ?? '').trim(), input.startEventId ?? null, input.endEventId ?? null],
     );
-    return db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+    return insertId(db);
   });
 }
 

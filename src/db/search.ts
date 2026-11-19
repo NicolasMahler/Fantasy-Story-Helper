@@ -1,5 +1,7 @@
 import type { SqlDb } from './types';
 import type { FieldDef } from './entityTypes';
+import { stripMentions } from './mentions';
+import { likeEscape } from './sql';
 
 export interface Snippet {
   text: string;
@@ -22,13 +24,12 @@ export interface SearchResult {
   snippet: Snippet | null;
 }
 
-const MENTION_RE = /@\[([^\]\n]*)\]\((\d+)\)/g;
 const BEFORE = 40;
 const AFTER = 70;
 
 /** Snippet around the first match, with `@` links shown as their names. */
 export function makeSnippet(text: string, q: string): Snippet {
-  const plain = text.replace(MENTION_RE, '$1').replace(/\s+/g, ' ').trim();
+  const plain = stripMentions(text).replace(/\s+/g, ' ').trim();
   const idx = plain.toLowerCase().indexOf(q.toLowerCase());
   if (idx < 0) return { text: plain.length > BEFORE + AFTER ? `${plain.slice(0, BEFORE + AFTER)}…` : plain, start: 0, length: 0 };
   const from = Math.max(0, idx - BEFORE);
@@ -36,8 +37,6 @@ export function makeSnippet(text: string, q: string): Snippet {
   const prefix = from > 0 ? '…' : '';
   return { text: `${prefix}${plain.slice(from, to)}${to < plain.length ? '…' : ''}`, start: idx - from + prefix.length, length: q.length };
 }
-
-const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 /** Search one series (or everything when `seriesId` is null). Best matches first. */
 export function search(db: SqlDb, opts: { seriesId: number | null; q: string; limit?: number }): SearchResult[] {
@@ -81,7 +80,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       ranked.push({ rank: name.startsWith(ql) ? 0 : 1, r: { ...base, field: 'name', snippet: null } });
       continue;
     }
-    if (e.description.replace(MENTION_RE, '$1').toLowerCase().includes(ql)) {
+    if (stripMentions(e.description).toLowerCase().includes(ql)) {
       ranked.push({ rank: 2, r: { ...base, field: 'description', snippet: makeSnippet(e.description, q) } });
       continue;
     }

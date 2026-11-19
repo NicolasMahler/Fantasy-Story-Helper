@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 import { recomputeSeries } from './events';
 
 export interface AgeRow {
@@ -50,7 +51,7 @@ export function createAge(db: SqlDb, seriesId: number, input: AgeInput): number 
   db.exec('INSERT INTO age (series_id, name, start_year, end_year, direction) VALUES (?, ?, ?, ?, ?)', [
     seriesId, a.name, a.startYear, a.endYear, a.direction,
   ]);
-  return db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+  return insertId(db);
 }
 
 export function updateAge(db: SqlDb, id: number, input: AgeInput): void {
