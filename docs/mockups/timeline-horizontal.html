@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Horizontal timeline mockup</title>
+<style>
+  :root {
+    --bg: #16121f; --surface: #211b2d; --text: #ece6f5; --muted: #a399b3; --border: #3a3149;
+    --accent: #a58cf0; --accent-text: #16121f; --radius: 10px; --age: #a58cf0; --unplaced: #6b6475;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.45; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0d0a13; color: var(--text); padding: 24px 16px 48px; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px; }
+  .note { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; max-width: 80ch; }
+  .cap { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px; }
+  .screen { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 20px 50px rgb(0 0 0 / .45); }
+  .desktop { width: 1060px; max-width: 100%; margin-bottom: 36px; }
+  .phone { width: 375px; border-radius: 28px; }
+  header { display: flex; justify-content: space-between; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: .9rem; }
+  header span { color: var(--muted); }
+  main { padding: 12px 16px 20px; }
+  .back { color: var(--muted); font-size: .85rem; }
+  h2 { margin: 2px 0 8px; font-size: 1.35rem; }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 12px; font-size: .88rem; }
+  .tabs span { padding: 8px 9px; color: var(--muted); }
+  .tabs .on { color: var(--text); font-weight: 600; border-bottom: 2px solid var(--accent); }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 12px; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; font-size: .82rem; }
+  .seg span { padding: 5px 12px; border-radius: 999px; color: var(--muted); }
+  .seg .on { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .chip { font-size: .78rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .zoom { margin-left: auto; display: flex; gap: 4px; }
+  .zoom span { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); }
+
+  /* Canvas */
+  .scroller { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: #1a1525; }
+  .canvas { position: relative; width: 1000px; height: 330px; }
+  .lane-labels { position: absolute; left: 0; top: 0; bottom: 0; width: 92px; background: #1a1525; border-right: 1px solid var(--border); z-index: 3; }
+  .lane-label { position: absolute; left: 0; width: 92px; padding: 0 10px; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); display: flex; align-items: center; }
+  .lane-label.age { color: var(--age); }
+  .lane { position: absolute; left: 92px; right: 0; border-bottom: 1px solid var(--border); }
+  .lane.unplaced::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dotted var(--unplaced); }
+  .ageband { position: absolute; background: linear-gradient(180deg, color-mix(in srgb, var(--age) 13%, transparent), color-mix(in srgb, var(--age) 5%, transparent)); border-left: 2px solid color-mix(in srgb, var(--age) 70%, transparent); }
+  .ageband::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid var(--age); }
+  .ageband .lbl { position: absolute; left: 6px; top: 4px; font-size: .7rem; color: var(--age); }
+
+  .ev { position: absolute; transform: translateX(-6px); z-index: 2; }
+  .dot { display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px #1a1525; }
+  .dot.hollow { background: #1a1525; border: 2px dashed var(--muted); }
+  .tag { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .76rem; text-align: center; line-height: 1.25; }
+  .tag.up { bottom: 18px; } .tag.down { top: 18px; }
+  .tag b { font-weight: 550; display: block; }
+  .tag.rec b { font-style: italic; color: #d6cde6; }
+  .tag small { color: var(--muted); }
+  .stem { position: absolute; left: 5px; width: 2px; background: var(--border); }
+
+  .axis { position: absolute; left: 92px; right: 0; bottom: 0; height: 34px; border-top: 1px solid var(--border); }
+  .tick { position: absolute; bottom: 8px; transform: translateX(-50%); font-size: .7rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tick::before { content: ''; position: absolute; left: 50%; top: -9px; height: 6px; border-left: 1px solid var(--muted); }
+  .break { position: absolute; bottom: 0; top: 0; width: 18px; transform: translateX(-9px);
+    background: repeating-linear-gradient(115deg, transparent 0 5px, color-mix(in srgb, var(--muted) 35%, transparent) 5px 6px); z-index: 1; opacity: .7; }
+  .break-lbl { position: absolute; bottom: 8px; transform: translateX(-50%); font-size: .66rem; color: var(--muted); font-style: italic; white-space: nowrap; }
+
+  .card { position: absolute; z-index: 5; width: 250px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); font-size: .8rem; display: grid; gap: 4px; box-shadow: 0 10px 30px rgb(0 0 0 / .4); }
+  .card b { font-size: .9rem; }
+  .card .who { display: flex; flex-wrap: wrap; gap: 4px; }
+  .card .who span { background: #2c2440; padding: 2px 7px; border-radius: 6px; font-size: .74rem; }
+  .card a { color: var(--accent); font-weight: 600; }
+
+  .undated { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: .8rem; color: var(--muted); }
+  .undated span { border: 1px dashed var(--border); padding: 4px 10px; border-radius: 999px; color: var(--text); }
+  .legend { display: flex; gap: 14px; font-size: .75rem; color: var(--muted); margin-top: 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); vertical-align: -1px; margin-right: 4px; }
+  .legend i.h { background: none; border: 2px dashed var(--muted); }
+  .hint { font-size: .74rem; color: var(--muted); margin-top: 6px; }
+
+  /* Reading-order variant: book sections along x */
+  .bookband { position: absolute; top: 0; bottom: 34px; border-left: 1px dashed var(--border); }
+  .bookband .lbl { position: absolute; left: 6px; top: 4px; font-size: .72rem; font-weight: 700; }
+  .bookband .lbl span { color: var(--muted); font-weight: 400; }
+</style>
+</head>
+<body>
+  <h1>Timeline, horizontal: design mockup (static)</h1>
+  <p class="note">Time runs left → right. Each age is a lane (row); dates outside any age sit in the Unplaced lane (dotted).
+    Hatched strips are compressed gaps, labelled with how much time they skip. ● = in the story, ◌ = recounted.
+    Pinch / ⊕⊖ to zoom, drag to pan. Undated events wait in a tray below the canvas.</p>
+
+  <!-- DESKTOP, STORY ORDER -->
+  <div class="cap">Desktop: story order, Siege of Pale tapped</div>
+  <div class="screen desktop">
+    <header><b>Fantasy Helper</b><span>Library · Settings</span></header>
+    <main>
+      <div class="back">← Library</div>
+      <h2>Malazan Book of the Fallen</h2>
+      <div class="tabs"><span>Entries</span><span class="on">Timeline</span><span>Books</span><span>Types</span><span>Calendar</span></div>
+      <div class="controls">
+        <div class="seg"><span class="on">Story order</span><span>Reading order</span></div>
+        <span class="chip">+ Character</span><span class="chip">+ Location</span><span class="chip">+ Type</span><span class="chip">+ Book</span>
+        <div class="zoom"><span>⊖</span><span>⊕</span><span>⤢</span></div>
+      </div>
+
+      <div class="scroller">
+        <div class="canvas">
+          <div class="lane-labels">
+            <div class="lane-label age" style="top:0;height:148px">Burn's<br>Sleep</div>
+            <div class="lane-label" style="top:148px;height:148px">Unplaced</div>
+          </div>
+          <div class="lane" style="top:0;height:148px"></div>
+          <div class="lane unplaced" style="top:148px;height:148px"></div>
+          <div class="ageband" style="left:420px;right:0;top:0;height:148px"><span class="lbl">Burn's Sleep · from year 0</span></div>
+
+          <!-- compressed gaps -->
+          <div class="break" style="left:250px"></div>
+          <div class="break" style="left:385px"></div>
+          <div class="break" style="left:500px"></div>
+
+          <!-- Unplaced lane events (centre line y=222) -->
+          <div class="ev" style="left:170px;top:216px"><span class="dot hollow"></span>
+            <div class="tag up rec"><b>T'lan Imass–Jaghut Wars</b><small>told by Tool</small></div></div>
+          <div class="ev" style="left:330px;top:216px"><span class="dot hollow"></span>
+            <div class="tag down rec"><b>Imprisonment of the<br>Jaghut Tyrant</b><small>told by Tool</small></div></div>
+
+          <!-- Age lane events (centre line y=74) -->
+          <div class="ev" style="left:600px;top:68px"><span class="dot" style="box-shadow:0 0 0 3px #1a1525,0 0 0 5px var(--accent)"></span>
+            <div class="tag up"><b>Siege of Pale</b><small>Bk 1</small></div></div>
+          <div class="ev" style="left:760px;top:68px"><span class="dot"></span>
+            <div class="tag up"><b>Fête of Gedderone</b><small>Bk 1</small></div></div>
+          <div class="ev" style="left:760px;top:68px"><div class="stem" style="top:12px;height:26px"></div>
+            <div class="tag down" style="top:40px"><b>Release of the Jaghut Tyrant</b><small>same year · Bk 1</small></div></div>
+          <div class="ev" style="left:910px;top:68px"><span class="dot"></span>
+            <div class="tag up"><b>Fall of Aren</b><small>Bk 2 · pinned</small></div></div>
+
+          <div class="card" style="left:470px;top:96px">
+            <b>Siege of Pale</b>
+            <div>Year 1163, Burn's Sleep · Happens in Book 1</div>
+            <div class="who"><span>👤 Whiskeyjack · leader</span><span>👤 Tattersail</span><span>📍 Pale</span><span>+7</span></div>
+            <a>Open event →</a>
+          </div>
+
+          <div class="axis">
+            <div class="tick" style="left:78px">Ancient</div>
+            <div class="break-lbl" style="left:158px">~90,000 yrs</div>
+            <div class="tick" style="left:238px">Long ago</div>
+            <div class="break-lbl" style="left:293px">~10,000 yrs</div>
+            <div class="tick" style="left:328px">0</div>
+            <div class="break-lbl" style="left:408px">1,163 yrs</div>
+            <div class="tick" style="left:508px">1163</div>
+            <div class="tick" style="left:668px">1164</div>
+            <div class="tick" style="left:818px">1165</div>
+          </div>
+        </div>
+      </div>
+      <div class="undated">Undated (1): <span>◌ Kellanved's Ascension · Bk 2</span></div>
+      <div class="legend"><span><i></i>In the story</span><span><i class="h"></i>Recounted</span></div>
+    </main>
+  </div>
+
+  <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+    <!-- PHONE, STORY ORDER (same canvas, scrolls sideways) -->
+    <div>
+      <div class="cap">Phone: same canvas, swipe sideways</div>
+      <div class="screen phone">
+        <header><b>Fantasy Helper</b><span>Library · Settings</span></header>
+        <main>
+          <h2 style="font-size:1.15rem">Malazan Book of the Fallen</h2>
+          <div class="tabs" style="font-size:.8rem"><span>Entries</span><span class="on">Timeline</span><span>Books</span><span>Types</span></div>
+          <div class="controls">
+            <div class="seg"><span class="on">Story</span><span>Reading</span></div>
+            <span class="chip">Filters</span>
+          </div>
+          <div class="scroller">
+            <div class="canvas" style="width:1000px">
+              <div class="lane-labels" style="width:70px">
+                <div class="lane-label age" style="top:0;height:148px;width:70px">Burn's<br>Sleep</div>
+                <div class="lane-label" style="top:148px;height:148px;width:70px">Unpl.</div>
+              </div>
+              <div class="lane" style="top:0;height:148px;left:70px"></div>
+              <div class="lane unplaced" style="top:148px;height:148px;left:70px"></div>
+              <div class="ageband" style="left:420px;right:0;top:0;height:148px"><span class="lbl">Burn's Sleep</span></div>
+              <div class="break" style="left:250px"></div><div class="break" style="left:385px"></div><div class="break" style="left:500px"></div>
+              <div class="ev" style="left:170px;top:216px"><span class="dot hollow"></span><div class="tag up rec"><b>T'lan Imass–Jaghut Wars</b></div></div>
+              <div class="ev" style="left:330px;top:216px"><span class="dot hollow"></span><div class="tag down rec"><b>Imprisonment…</b></div></div>
+              <div class="ev" style="left:600px;top:68px"><span class="dot"></span><div class="tag up"><b>Siege of Pale</b></div></div>
+              <div class="ev" style="left:760px;top:68px"><span class="dot"></span><div class="tag up"><b>Fête of Gedderone</b></div></div>
+              <div class="ev" style="left:910px;top:68px"><span class="dot"></span><div class="tag up"><b>Fall of Aren</b></div></div>
+              <div class="axis" style="left:70px">
+                <div class="tick" style="left:100px">Ancient</div><div class="tick" style="left:260px">Long ago</div>
+                <div class="tick" style="left:530px">1163</div><div class="tick" style="left:690px">1164</div>
+              </div>
+            </div>
+          </div>
+          <div class="hint">← swipe → · pinch to zoom · lane labels stay pinned</div>
+        </main>
+      </div>
+    </div>
+
+    <!-- DESKTOP-ish, READING ORDER -->
+    <div style="flex:1;min-width:360px;max-width:640px">
+      <div class="cap">Reading order: books become sections along the x-axis</div>
+      <div class="screen">
+        <main>
+          <div class="controls">
+            <div class="seg"><span>Story order</span><span class="on">Reading order</span></div>
+            <span class="chip" style="border-color:var(--accent);color:var(--text)">👤 Tool ✕</span>
+          </div>
+          <div class="scroller">
+            <div class="canvas" style="width:600px;height:250px">
+              <div class="lane-labels">
+                <div class="lane-label age" style="top:0;height:108px">Burn's<br>Sleep</div>
+                <div class="lane-label" style="top:108px;height:108px">Unplaced</div>
+              </div>
+              <div class="lane" style="top:0;height:108px"></div>
+              <div class="lane unplaced" style="top:108px;height:108px"></div>
+              <div class="bookband" style="left:92px;width:340px"><span class="lbl">Book 1 <span>Gardens of the Moon</span></span></div>
+              <div class="bookband" style="left:432px;right:0"><span class="lbl">Book 2 <span>Deadhouse Gates</span></span></div>
+              <div class="ev" style="left:150px;top:156px"><span class="dot hollow"></span><div class="tag down rec"><b>Imass–Jaghut Wars</b><small>told by Tool</small></div></div>
+              <div class="ev" style="left:260px;top:156px"><span class="dot hollow"></span><div class="tag up rec"><b>Imprisonment</b><small>told by Tool</small></div></div>
+              <div class="ev" style="left:370px;top:48px"><span class="dot"></span><div class="tag down"><b>Release of the<br>Jaghut Tyrant</b><small>1164</small></div></div>
+              <div style="position:absolute;left:450px;top:96px;font-size:.75rem;color:var(--muted);width:140px">No events with Tool in this book.</div>
+              <div class="axis" style="height:34px"><div class="tick" style="left:58px">1st</div><div class="tick" style="left:168px">2nd</div><div class="tick" style="left:278px">3rd</div></div>
+            </div>
+          </div>
+          <div class="hint">Within each book, events keep story order; spacing is even (no time scale).</div>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

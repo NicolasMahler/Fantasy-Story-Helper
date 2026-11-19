@@ -137,3 +137,25 @@ export function formatDate(
   }
   return e.sort_key_override !== null ? `${s} (pinned)` : s;
 }
+
+/**
+ * The age an event belongs to on the timeline: its explicit age, else the first age (by start)
+ * whose range contains the position. Backward ages run from start down to end.
+ */
+export function containingAge(key: number | null, explicitAgeId: number | null, ages: AgeInfo[]): number | null {
+  if (explicitAgeId !== null) return explicitAgeId;
+  if (key === null) return null;
+  const sorted = [...ages].sort((a, b) => a.start_year - b.start_year);
+  for (const a of sorted) {
+    const inside = a.direction === 'forward'
+      ? key >= a.start_year && (a.end_year === null || key <= a.end_year)
+      : key <= a.start_year && (a.end_year === null || key >= a.end_year);
+    if (inside) return a.id;
+  }
+  return null;
+}
+
+/** Year within an age for a position on the master axis. */
+export function yearInAge(key: number, age: AgeInfo): number {
+  return age.direction === 'backward' ? age.start_year - key : key - age.start_year;
+}

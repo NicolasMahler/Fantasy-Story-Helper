@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Timeline mockup</title>
+<style>
+  :root {
+    --bg: #16121f; --surface: #211b2d; --text: #ece6f5; --muted: #a399b3; --border: #3a3149;
+    --accent: #a58cf0; --accent-text: #16121f; --radius: 10px;
+    --age: #a58cf0; --unplaced: #6b6475;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.45; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0d0a13; color: var(--text); padding: 24px 16px 48px; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px; }
+  .note { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; max-width: 70ch; }
+  .frames { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+  .frame-wrap { display: grid; gap: 8px; }
+  .frame-cap { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .06em; }
+  .phone {
+    width: 375px; min-height: 760px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 28px; overflow: hidden; box-shadow: 0 20px 50px rgb(0 0 0 / .45);
+  }
+  header { display: flex; justify-content: space-between; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: .9rem; }
+  header b { font-weight: 700; }
+  header span { color: var(--muted); }
+  main { padding: 12px 16px 24px; }
+  .back { color: var(--muted); font-size: .85rem; }
+  h2 { margin: 2px 0 8px; font-size: 1.35rem; }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 12px; font-size: .88rem; overflow: hidden; }
+  .tabs span { padding: 8px 9px; color: var(--muted); }
+  .tabs .on { color: var(--text); font-weight: 600; border-bottom: 2px solid var(--accent); }
+
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; font-size: .82rem; margin-bottom: 10px; }
+  .seg span { padding: 5px 12px; border-radius: 999px; color: var(--muted); }
+  .seg .on { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip { font-size: .78rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .chip.set { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .chip.set::after { content: ' ✕'; color: var(--muted); }
+
+  /* Timeline */
+  .tl { position: relative; }
+  .band { position: relative; margin: 0 0 6px; }
+  .band-label {
+    display: flex; align-items: center; gap: 8px; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted); margin: 10px 0 4px;
+  }
+  .band-label::after { content: ''; flex: 1; border-top: 1px solid var(--border); }
+  .band.age .band-label { color: var(--age); }
+  .band.age .band-label::after { border-top-color: color-mix(in srgb, var(--age) 45%, transparent); }
+  .band.age { background: linear-gradient(90deg, color-mix(in srgb, var(--age) 9%, transparent), transparent 70%); border-radius: 8px; padding-bottom: 4px; }
+
+  .row { display: grid; grid-template-columns: 56px 18px 1fr; align-items: start; min-height: 30px; }
+  .when { font-size: .74rem; color: var(--muted); text-align: right; padding: 5px 6px 0 0; font-variant-numeric: tabular-nums; }
+  .spine { position: relative; align-self: stretch; }
+  .spine::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; border-left: 2px solid var(--age); }
+  .band.unplaced .spine::before { border-left: 2px dotted var(--unplaced); }
+  .dot { position: absolute; left: 3px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--bg); }
+  .dot.hollow { background: var(--bg); border: 2px dashed var(--muted); }
+  .ev { padding: 3px 0 6px 4px; }
+  .ev .name { font-weight: 550; font-size: .93rem; }
+  .ev.rec .name { font-style: italic; color: #d6cde6; }
+  .ev small { display: block; color: var(--muted); font-size: .75rem; }
+
+  .gap { display: grid; grid-template-columns: 56px 18px 1fr; height: 26px; }
+  .gap .spine::before { border-left-style: dotted; border-left-color: var(--border); }
+  .gap .lbl { font-size: .72rem; color: var(--muted); font-style: italic; align-self: center; padding-left: 4px; }
+
+  .card {
+    margin: 2px 0 8px 4px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); font-size: .82rem; display: grid; gap: 4px;
+  }
+  .card .who { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .card .who span { background: #2c2440; padding: 2px 7px; border-radius: 6px; font-size: .76rem; }
+  .card a { color: var(--accent); text-decoration: none; font-weight: 600; margin-top: 4px; }
+
+  .book-h { font-size: .8rem; font-weight: 700; margin: 14px 0 4px; display: flex; gap: 8px; align-items: baseline; }
+  .book-h span { color: var(--muted); font-weight: 400; }
+  .legend { display: flex; gap: 14px; font-size: .75rem; color: var(--muted); margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); vertical-align: -1px; margin-right: 4px; }
+  .legend i.h { background: none; border: 2px dashed var(--muted); }
+</style>
+</head>
+<body>
+  <h1>Timeline: design mockup (static, not wired to data)</h1>
+  <p class="note">Left: story order, with Siege of Pale tapped open. Right: reading order with a character filter applied.
+    Purple bands are ages; the dotted spine is the Unplaced lane (dates outside any age). ● = happens in the story, ◌ = recounted.</p>
+
+  <div class="frames">
+    <!-- STORY ORDER -->
+    <div class="frame-wrap">
+      <div class="frame-cap">Story order</div>
+      <div class="phone">
+        <header><b>Fantasy Helper</b><span>Library · Settings</span></header>
+        <main>
+          <div class="back">← Library</div>
+          <h2>Malazan Book of the Fallen</h2>
+          <div class="tabs"><span>Entries</span><span class="on">Timeline</span><span>Books</span><span>Types</span><span>Calendar</span></div>
+
+          <div class="seg"><span class="on">Story order</span><span>Reading order</span></div>
+          <div class="filters">
+            <span class="chip">+ Character</span><span class="chip">+ Location</span><span class="chip">+ Type</span><span class="chip">+ Book</span>
+          </div>
+
+          <div class="tl">
+            <div class="band unplaced">
+              <div class="band-label">Unplaced</div>
+              <div class="row">
+                <div class="when">Ancient</div><div class="spine"><span class="dot hollow"></span></div>
+                <div class="ev rec"><span class="name">T'lan Imass–Jaghut Wars</span><small>Recounted by Tool · Bk 1</small></div>
+              </div>
+              <div class="gap"><div></div><div class="spine"></div><div class="lbl">⋮ ~90,000 years</div></div>
+              <div class="row">
+                <div class="when">Long ago</div><div class="spine"><span class="dot hollow"></span></div>
+                <div class="ev rec"><span class="name">Imprisonment of the Jaghut Tyrant</span><small>Recounted by Tool · Bk 1</small></div>
+              </div>
+              <div class="gap"><div></div><div class="spine"></div><div class="lbl">⋮ ~11,000 years</div></div>
+            </div>
+
+            <div class="band age">
+              <div class="band-label">Burn's Sleep</div>
+              <div class="row">
+                <div class="when">1163</div><div class="spine"><span class="dot"></span></div>
+                <div class="ev">
+                  <span class="name">Siege of Pale</span><small>Bk 1 · 10 participants</small>
+                  <div class="card">
+                    <div>Year 1163, Burn's Sleep · Happens in Book 1</div>
+                    <div class="who"><span>👤 Whiskeyjack · leader</span><span>👤 Tattersail</span><span>👤 Quick Ben</span><span>📍 Pale</span><span>+6</span></div>
+                    <a>Open event →</a>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="when">1164</div><div class="spine"><span class="dot"></span></div>
+                <div class="ev"><span class="name">Fête of Gedderone</span><small>1 year after Siege of Pale · Bk 1</small></div>
+              </div>
+              <div class="row">
+                <div class="when"></div><div class="spine"><span class="dot"></span></div>
+                <div class="ev"><span class="name">Release of the Jaghut Tyrant</span><small>Same year as Fête · Bk 1</small></div>
+              </div>
+              <div class="row">
+                <div class="when">1165</div><div class="spine"><span class="dot"></span></div>
+                <div class="ev"><span class="name">Fall of Aren</span><small>Bk 2 · pinned</small></div>
+              </div>
+            </div>
+
+            <div class="band unplaced">
+              <div class="band-label">Undated</div>
+              <div class="row">
+                <div class="when">—</div><div class="spine"><span class="dot hollow"></span></div>
+                <div class="ev rec"><span class="name">Kellanved's Ascension</span><small>Recounted · Bk 2</small></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="legend"><span><i></i>In the story</span><span><i class="h"></i>Recounted</span></div>
+        </main>
+      </div>
+    </div>
+
+    <!-- READING ORDER -->
+    <div class="frame-wrap">
+      <div class="frame-cap">Reading order + filter</div>
+      <div class="phone">
+        <header><b>Fantasy Helper</b><span>Library · Settings</span></header>
+        <main>
+          <div class="back">← Library</div>
+          <h2>Malazan Book of the Fallen</h2>
+          <div class="tabs"><span>Entries</span><span class="on">Timeline</span><span>Books</span><span>Types</span><span>Calendar</span></div>
+
+          <div class="seg"><span>Story order</span><span class="on">Reading order</span></div>
+          <div class="filters">
+            <span class="chip set">👤 Tool</span><span class="chip">+ Location</span><span class="chip">+ Type</span><span class="chip">+ Book</span>
+          </div>
+
+          <div class="tl">
+            <div class="book-h">Book 1 <span>Gardens of the Moon</span></div>
+            <div class="band unplaced">
+              <div class="row">
+                <div class="when">Ancient</div><div class="spine"><span class="dot hollow"></span></div>
+                <div class="ev rec"><span class="name">T'lan Imass–Jaghut Wars</span><small>Told by Tool</small></div>
+              </div>
+              <div class="row">
+                <div class="when">Long ago</div><div class="spine"><span class="dot hollow"></span></div>
+                <div class="ev rec"><span class="name">Imprisonment of the Jaghut Tyrant</span><small>Told by Tool</small></div>
+              </div>
+            </div>
+            <div class="band age">
+              <div class="row">
+                <div class="when">1164</div><div class="spine"><span class="dot"></span></div>
+                <div class="ev"><span class="name">Release of the Jaghut Tyrant</span><small>Burn's Sleep · Tool: participant</small></div>
+              </div>
+            </div>
+
+            <div class="book-h">Book 2 <span>Deadhouse Gates</span></div>
+            <p class="note" style="margin:4px 0 0 74px">No events with Tool in this book.</p>
+          </div>
+
+          <div class="legend"><span><i></i>In the story</span><span><i class="h"></i>Recounted</span></div>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

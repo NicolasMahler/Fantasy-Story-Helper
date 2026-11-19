@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Timeline experiments</title>
+<style>
+  :root {
+    --bg: #16121f; --surface: #211b2d; --text: #ece6f5; --muted: #a399b3; --border: #3a3149;
+    --accent: #a58cf0; --gold: #e8c46a; --radius: 10px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.45; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0d0a13; color: var(--text); padding: 24px 16px 60px; }
+  h1 { font-size: 1.15rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 40px 0 4px; }
+  .note { color: var(--muted); font-size: .86rem; margin: 0 0 14px; max-width: 82ch; }
+  .panel { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; max-width: 980px; box-shadow: 0 20px 50px rgb(0 0 0 / .45); }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { font-family: inherit; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font-size: .8rem; }
+  .chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .chip.on { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: .76rem; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-right: 5px; vertical-align: -1px; }
+  .legend i.h { background: none; border: 2px dashed var(--muted); }
+  .legend i.l { width: 18px; height: 0; border-radius: 0; border-top: 2px dotted var(--gold); background: none; vertical-align: 3px; }
+  .disclaimer { font-size: .76rem; color: var(--muted); font-style: italic; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <h1>Timeline experiments (static mockups)</h1>
+  <p class="note">Two avant-garde views. Book 2–4 events are illustrative placeholders, chosen to show the shape of the idea, not checked against the books.</p>
+
+  <!-- ============ 3. STORY TIME × READING TIME ============ -->
+  <h2>3 · Story time × reading time</h2>
+  <p class="note">Across: where you <b>read</b> it. Up: when it <b>happened</b> (log-compressed). Events in the story ride the bright ridge;
+    recounted events hang below it, tethered to the moment they're told. Long tethers = deep flashbacks, legends and visions.</p>
+  <div class="panel">
+    <div class="controls"><span class="chip on">All events</span><span class="chip">👤 Tool</span><span class="chip">Recounted only</span><span class="chip">Tethers on</span></div>
+    <svg viewBox="0 0 900 520" role="img" aria-label="Story time versus reading time chart">
+      <defs>
+        <linearGradient id="ridge" x1="0" x2="1">
+          <stop offset="0" stop-color="#a58cf0" stop-opacity=".0"/><stop offset=".15" stop-color="#a58cf0" stop-opacity=".35"/>
+          <stop offset=".85" stop-color="#a58cf0" stop-opacity=".35"/><stop offset="1" stop-color="#a58cf0" stop-opacity=".0"/>
+        </linearGradient>
+        <linearGradient id="deep" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#16121f" stop-opacity="0"/><stop offset="1" stop-color="#3b2a14" stop-opacity=".45"/>
+        </linearGradient>
+        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#3a3149" stroke-width="1.5"/>
+        </pattern>
+        <filter id="glow"><feGaussianBlur stdDeviation="3"/></filter>
+      </defs>
+
+      <!-- deep-time wash -->
+      <rect x="100" y="300" width="780" height="190" fill="url(#deep)"/>
+      <!-- Burn's Sleep band -->
+      <rect x="100" y="60" width="780" height="240" fill="#a58cf0" opacity=".06"/>
+      <text x="108" y="76" fill="#a58cf0" font-size="11" letter-spacing=".06em">BURN'S SLEEP</text>
+      <!-- compressed gaps -->
+      <rect x="100" y="185" width="780" height="22" fill="url(#hatch)" opacity=".8"/>
+      <text x="108" y="200" fill="#a399b3" font-size="10" font-style="italic">≈1,150 years compressed</text>
+      <rect x="100" y="300" width="780" height="14" fill="url(#hatch)" opacity=".8"/>
+      <rect x="100" y="400" width="780" height="14" fill="url(#hatch)" opacity=".8"/>
+
+      <!-- book columns -->
+      <g stroke="#3a3149" stroke-dasharray="3 5">
+        <line x1="300" y1="40" x2="300" y2="490"/><line x1="500" y1="40" x2="500" y2="490"/><line x1="700" y1="40" x2="700" y2="490"/>
+      </g>
+      <g fill="#ece6f5" font-size="12" font-weight="700" text-anchor="middle">
+        <text x="200" y="508">Book 1</text><text x="400" y="508">Book 2</text><text x="600" y="508">Book 3</text><text x="800" y="508">Book 4</text>
+      </g>
+      <text x="490" y="30" fill="#a399b3" font-size="11" text-anchor="middle">reading order →</text>
+
+      <!-- y axis -->
+      <g fill="#a399b3" font-size="10.5" text-anchor="end">
+        <text x="92" y="94">1166</text><text x="92" y="134">1164</text><text x="92" y="174">1162</text>
+        <text x="92" y="296">Year 0</text><text x="92" y="362">Long ago</text>
+        <text x="92" y="444">Ancient</text><text x="92" y="482">Myth</text>
+      </g>
+      <text x="22" y="270" fill="#a399b3" font-size="11" transform="rotate(-90 22 270)" text-anchor="middle">← when it happened (story time)</text>
+
+      <!-- the ridge of present events -->
+      <path d="M 120 158 C 200 140, 260 128, 330 132 S 520 112, 600 108 S 700 150, 740 168 S 820 98, 870 90" fill="none" stroke="url(#ridge)" stroke-width="22" stroke-linecap="round"/>
+
+      <!-- tethers (recounted) -->
+      <g fill="none" stroke="#e8c46a" stroke-width="1.5" stroke-dasharray="2 4" opacity=".85">
+        <path d="M 236 136 C 236 260, 222 380, 222 440"/>
+        <path d="M 262 134 C 270 230, 268 320, 268 360"/>
+        <path d="M 438 126 C 448 250, 452 340, 452 420"/>
+        <path d="M 628 110 C 640 220, 640 300, 640 372"/>
+      </g>
+
+      <!-- present events -->
+      <g fill="#a58cf0" stroke="#16121f" stroke-width="3">
+        <circle cx="160" cy="150" r="9"/><circle cx="210" cy="134" r="7"/><circle cx="250" cy="134" r="6"/>
+        <circle cx="380" cy="132" r="8"/><circle cx="430" cy="128" r="6"/>
+        <circle cx="580" cy="110" r="9"/><circle cx="640" cy="104" r="6"/>
+        <circle cx="740" cy="172" r="6"/><circle cx="840" cy="94" r="9"/>
+      </g>
+      <!-- recounted events -->
+      <g fill="#16121f" stroke="#a399b3" stroke-width="2" stroke-dasharray="3 3">
+        <circle cx="222" cy="440" r="8"/><circle cx="268" cy="362" r="6"/><circle cx="452" cy="422" r="7"/><circle cx="640" cy="374" r="7"/>
+      </g>
+      <!-- teller pins on the ridge -->
+      <g fill="#e8c46a"><circle cx="236" cy="136" r="2.5"/><circle cx="262" cy="134" r="2.5"/><circle cx="438" cy="126" r="2.5"/><circle cx="628" cy="110" r="2.5"/></g>
+
+      <!-- labels -->
+      <g font-size="11" fill="#ece6f5">
+        <text x="148" y="174" text-anchor="middle">Siege of Pale</text>
+        <text x="216" y="118" text-anchor="middle">Fête</text>
+        <text x="378" y="156" text-anchor="middle">Chain of Dogs</text>
+        <text x="580" y="94" text-anchor="middle">Siege of Capustan</text>
+        <text x="742" y="194" text-anchor="middle">Karsa's raid</text>
+        <text x="742" y="207" text-anchor="middle" fill="#a399b3" font-size="9.5">(told in sequence, set years earlier)</text>
+        <text x="838" y="78" text-anchor="middle">Raraku</text>
+      </g>
+      <g font-size="11" fill="#d6cde6" font-style="italic">
+        <text x="234" y="466" text-anchor="middle">T'lan Imass–Jaghut Wars</text>
+        <text x="282" y="352" text-anchor="start">Imprisonment of the Tyrant</text>
+        <text x="466" y="426" text-anchor="start">Fall of the First Empire</text>
+        <text x="654" y="378" text-anchor="start">The Chaining</text>
+      </g>
+      <g font-size="9.5" fill="#e8c46a">
+        <text x="230" y="300" text-anchor="end">told by Tool</text>
+      </g>
+
+      <!-- hover card -->
+      <g transform="translate(470 230)">
+        <rect width="230" height="62" rx="10" fill="#211b2d" stroke="#3a3149"/>
+        <text x="12" y="20" fill="#ece6f5" font-size="12" font-weight="600" font-style="italic">Fall of the First Empire</text>
+        <text x="12" y="37" fill="#a399b3" font-size="10.5">Recounted in Book 2 · ancient</text>
+        <text x="12" y="52" fill="#e8c46a" font-size="10.5">tether: Book 2 → ~100,000 years back</text>
+      </g>
+    </svg>
+    <div class="legend"><span><i></i>Happens in the story</span><span><i class="h"></i>Recounted</span><span><i class="l"></i>Tether to where it's told</span><span>Dot size = participants</span></div>
+  </div>
+
+  <!-- ============ 4. CONSTELLATIONS ============ -->
+  <h2>4 · The night sky</h2>
+  <p class="note">The centre is <b>now</b> (the latest event in the story). Distance from the centre is time before now, on log rings.
+    Each book claims a slice of sky. Stars are events (brighter = more participants); recounted events are hazy nebulae;
+    relative dates (“1 year after…”) are drawn as constellation lines.</p>
+  <div class="panel">
+    <div class="controls"><span class="chip on">All books</span><span class="chip">Book 1</span><span class="chip">Constellation lines</span><span class="chip">Labels</span></div>
+    <svg viewBox="0 0 900 640" role="img" aria-label="Constellation view of events">
+      <defs>
+        <radialGradient id="sky" cx="50%" cy="50%" r="60%">
+          <stop offset="0" stop-color="#2a2140"/><stop offset=".55" stop-color="#16121f"/><stop offset="1" stop-color="#0a0810"/>
+        </radialGradient>
+        <radialGradient id="star" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#d9ccff"/><stop offset="1" stop-color="#a58cf0" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#e8c46a" stop-opacity=".55"/><stop offset=".6" stop-color="#a58cf0" stop-opacity=".18"/><stop offset="1" stop-color="#a58cf0" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="blur"><feGaussianBlur stdDeviation="2.2"/></filter>
+      </defs>
+      <rect width="900" height="640" fill="url(#sky)" rx="10"/>
+
+      <!-- faint background stars -->
+      <g fill="#fff" opacity=".35">
+        <circle cx="70" cy="80" r=".8"/><circle cx="820" cy="60" r="1"/><circle cx="120" cy="560" r=".7"/><circle cx="760" cy="590" r=".9"/>
+        <circle cx="40" cy="330" r=".6"/><circle cx="860" cy="300" r=".8"/><circle cx="600" cy="40" r=".6"/><circle cx="300" cy="610" r=".7"/>
+        <circle cx="200" cy="140" r=".6"/><circle cx="720" cy="470" r=".6"/><circle cx="560" cy="580" r=".8"/><circle cx="150" cy="420" r=".5"/>
+      </g>
+
+      <g transform="translate(450 320)">
+        <!-- Burn's Sleep: inner region -->
+        <circle r="180" fill="#a58cf0" opacity=".05"/>
+        <!-- log rings -->
+        <g fill="none" stroke="#a399b3" stroke-opacity=".22">
+          <circle r="36"/><circle r="74"/><circle r="124"/><circle r="176"/><circle r="228"/><circle r="280"/>
+        </g>
+        <circle r="180" fill="none" stroke="#a58cf0" stroke-opacity=".5" stroke-dasharray="2 6"/>
+        <g fill="#a399b3" font-size="9.5" opacity=".8">
+          <text x="4" y="-38">1 yr</text><text x="4" y="-76">10 yrs</text><text x="4" y="-126">100 yrs</text>
+          <text x="4" y="-230">10,000 yrs</text><text x="4" y="-282">100,000 yrs</text>
+        </g>
+        <text x="-176" y="12" fill="#a58cf0" font-size="10" opacity=".8" transform="rotate(-90 -176 12)">BURN'S SLEEP</text>
+
+        <!-- book sectors -->
+        <g stroke="#a399b3" stroke-opacity=".12">
+          <line x1="0" y1="0" x2="-297" y2="-40"/><line x1="0" y1="0" x2="190" y2="-230"/><line x1="0" y1="0" x2="230" y2="190"/><line x1="0" y1="0" x2="-150" y2="260"/>
+        </g>
+        <g fill="#ece6f5" font-size="11" font-weight="700" opacity=".55">
+          <text x="-300" y="-120">BOOK 1</text><text x="250" y="-150">BOOK 2</text><text x="250" y="200">BOOK 3</text><text x="-290" y="190">BOOK 4</text>
+        </g>
+
+        <!-- constellation lines (relative dates) -->
+        <g stroke="#e8c46a" stroke-opacity=".6" stroke-width="1.2" stroke-dasharray="1 4" stroke-linecap="round">
+          <line x1="-36" y1="-63" x2="-12" y2="-63"/><line x1="-12" y1="-63" x2="4" y2="-65"/>
+          <line x1="-36" y1="-63" x2="34" y2="-49"/>
+        </g>
+
+        <!-- nebulae (recounted) -->
+        <g>
+          <circle cx="-140" cy="-242" r="26" fill="url(#nebula)" filter="url(#blur)"/>
+          <circle cx="-20" cy="-229" r="20" fill="url(#nebula)" filter="url(#blur)"/>
+          <circle cx="207" cy="-96" r="24" fill="url(#nebula)" filter="url(#blur)"/>
+          <circle cx="31" cy="173" r="20" fill="url(#nebula)" filter="url(#blur)"/>
+        </g>
+
+        <!-- stars (present) -->
+        <g>
+          <circle cx="-36" cy="-63" r="11" fill="url(#star)"/><circle cx="-12" cy="-63" r="8" fill="url(#star)"/><circle cx="4" cy="-65" r="7" fill="url(#star)"/>
+          <circle cx="34" cy="-49" r="9" fill="url(#star)"/><circle cx="44" cy="-28" r="7" fill="url(#star)"/>
+          <circle cx="25" cy="25" r="10" fill="url(#star)"/><circle cx="7" cy="19" r="7" fill="url(#star)"/>
+          <circle cx="-68" cy="39" r="7" fill="url(#star)"/><circle cx="-20" cy="3" r="11" fill="url(#star)"/>
+        </g>
+
+        <!-- now -->
+        <circle r="3" fill="#e8c46a"/>
+        <text x="8" y="14" fill="#e8c46a" font-size="10">now</text>
+
+        <!-- labels -->
+        <g font-size="10.5" fill="#ece6f5">
+          <text x="-44" y="-80" text-anchor="end">Siege of Pale</text>
+          <text x="-6" y="-82" text-anchor="middle">Fête · Release</text>
+          <text x="48" y="-54">Chain of Dogs</text>
+          <text x="38" y="40">Siege of Capustan</text>
+          <text x="-76" y="56" text-anchor="end">Karsa's raid</text>
+          <text x="-36" y="10" text-anchor="end">Raraku</text>
+        </g>
+        <g font-size="10.5" fill="#e8d8ae" font-style="italic">
+          <text x="-140" y="-276" text-anchor="middle">T'lan Imass–Jaghut Wars</text>
+          <text x="-20" y="-256" text-anchor="middle">Imprisonment</text>
+          <text x="236" y="-90">Fall of the First Empire</text>
+          <text x="56" y="178">The Chaining</text>
+        </g>
+
+        <!-- tap card -->
+        <g transform="translate(-300 -40)">
+          <rect width="170" height="58" rx="10" fill="#211b2d" stroke="#3a3149"/>
+          <text x="12" y="20" fill="#ece6f5" font-size="12" font-weight="600">Siege of Pale</text>
+          <text x="12" y="36" fill="#a399b3" font-size="10.5">Year 1163 · 3 years before now</text>
+          <text x="12" y="50" fill="#a58cf0" font-size="10.5">10 participants · Book 1</text>
+        </g>
+      </g>
+    </svg>
+    <div class="legend"><span><i></i>Star = event in the story</span><span><i class="h"></i>Nebula = recounted</span><span><i class="l"></i>Constellation line = relative date</span><span>Rings = log time before now</span></div>
+  </div>
+</body>
+</html>
