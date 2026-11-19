@@ -7,6 +7,7 @@
   import TypesTab from './TypesTab.svelte';
   import CalendarTab from './CalendarTab.svelte';
   import TimelineTab from './TimelineTab.svelte';
+  import GraphTab from './GraphTab.svelte';
 
   let { seriesId, tab }: { seriesId: number; tab: SeriesTab } = $props();
 
@@ -49,6 +50,7 @@
   const tabs: { id: SeriesTab; label: string }[] = [
     { id: 'entries', label: 'Entries' },
     { id: 'timeline', label: 'Timeline' },
+    { id: 'graph', label: 'Graph' },
     { id: 'books', label: 'Books' },
     { id: 'types', label: 'Types' },
     { id: 'calendar', label: 'Calendar' },
@@ -92,6 +94,8 @@
     <BooksTab {seriesId} onchange={load} />
   {:else if tab === 'timeline'}
     <TimelineTab {seriesId} />
+  {:else if tab === 'graph'}
+    <GraphTab {seriesId} />
   {:else if tab === 'calendar'}
     <CalendarTab {seriesId} />
   {:else}

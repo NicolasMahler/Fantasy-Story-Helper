@@ -1,4 +1,4 @@
-export type SeriesTab = 'entries' | 'timeline' | 'books' | 'types' | 'calendar';
+export type SeriesTab = 'entries' | 'timeline' | 'graph' | 'books' | 'types' | 'calendar';
 
 export type Route =
   | { name: 'library' }
@@ -12,7 +12,7 @@ const id = '(\\d+)';
 const patterns: [RegExp, (m: RegExpMatchArray) => Route][] = [
   [/^$/, () => ({ name: 'library' })],
   [/^settings$/, () => ({ name: 'settings' })],
-  [new RegExp(`^s/${id}(?:/(timeline|books|types|calendar))?$`), (m) => ({ name: 'series', seriesId: +m[1], tab: (m[2] as SeriesTab) ?? 'entries' })],
+  [new RegExp(`^s/${id}(?:/(timeline|graph|books|types|calendar))?$`), (m) => ({ name: 'series', seriesId: +m[1], tab: (m[2] as SeriesTab) ?? 'entries' })],
   [new RegExp(`^s/${id}/e/${id}$`), (m) => ({ name: 'entity', seriesId: +m[1], entityId: +m[2] })],
   [new RegExp(`^s/${id}/new(?:/${id})?$`), (m) => ({ name: 'newEntity', seriesId: +m[1], typeId: m[2] ? +m[2] : null })],
 ];

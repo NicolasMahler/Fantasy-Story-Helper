@@ -123,6 +123,30 @@ const EVENTS: EventSample[] = [
   },
 ];
 
+/** Step 5: hand-made relationships (all from Book 1). [from, kind, to, note?] */
+const LINKS: [from: string, kind: string, to: string, note?: string][] = [
+  ['Kalam', 'partners', 'Quick Ben'],
+  ['Whiskeyjack', 'member of', 'Bridgeburners', 'sergeant of the Ninth Squad'],
+  ['Kalam', 'member of', 'Bridgeburners'],
+  ['Quick Ben', 'member of', 'Bridgeburners'],
+  ['Sorry', 'member of', 'Bridgeburners', 'recruit'],
+  ['Kalam', 'formerly of', 'Claw'],
+  ['Ganoes Paran', 'serves', 'Adjunct Lorn'],
+  ['Adjunct Lorn', 'serves', 'Malazan Empire'],
+  ['Tool', 'ally', 'Adjunct Lorn'],
+  ['Tool', 'member of', 'T\'lan Imass'],
+  ['Jaghut Tyrant', 'member of', 'Jaghut'],
+  ['Anomander Rake', 'leads', 'Tiste Andii'],
+  ['Anomander Rake', 'owns', 'Dragnipur'],
+  ['Ganoes Paran', 'owns', 'Chance'],
+  ['Crokus Younghand', 'owns', 'Coin of Oponn'],
+  ['Baruk', 'member of', 'T\'orrud Cabal'],
+  ['Rallick Nom', 'friends', 'Crokus Younghand'],
+  ['Rallick Nom', 'friends', 'Coll'],
+  ['Tattersail', 'close to', 'Ganoes Paran'],
+  ['Cotillion', 'possesses', 'Sorry'],
+];
+
 /** Creates the sample series. Refuses to run if a series with the same name already exists. Returns the series id. */
 export async function loadMalazanSample(): Promise<number> {
   if ((await rpc('listSeries')).some((s) => s.name === SERIES)) {
@@ -179,6 +203,11 @@ export async function loadMalazanSample(): Promise<number> {
       manualOrder: 0,
     });
     for (const [name, role] of ev.participants) await rpc('addParticipant', id(ev.name), id(name), role);
+  }
+
+  // Pass 4 (step 5): relationships.
+  for (const [from, kind, to, note] of LINKS) {
+    await rpc('createLink', { fromId: id(from), toId: id(to), kind, note });
   }
   return seriesId;
 }

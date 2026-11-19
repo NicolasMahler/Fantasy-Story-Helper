@@ -5,6 +5,7 @@
   import RichText from './RichText.svelte';
   import EntityForm from './EntityForm.svelte';
   import EventPanel from './EventPanel.svelte';
+  import Relationships from './Relationships.svelte';
   import type { EntityEvent } from '../db/events';
 
   let { seriesId, entityId }: { seriesId: number; entityId: number } = $props();
@@ -98,6 +99,8 @@
       </ul>
     </section>
   {/if}
+
+  <Relationships {seriesId} {entityId} entityName={entity.name} />
 
   <section>
     <h2>Mentioned in</h2>
