@@ -215,8 +215,8 @@
     {/if}
   </section>
 
-  <section>
-    <h2>Participants</h2>
+  <section class="etched">
+    <h2>Participants {#if detail.participants.length}<span class="count">{detail.participants.length}</span>{/if}</h2>
     {#if detail.participants.length === 0}
       <p class="muted">No one linked yet. Add the characters, places and things involved.</p>
     {:else}
@@ -275,6 +275,5 @@
   .p button { flex: none; padding-inline: 0.6rem; }
   @media (max-width: 480px) { .role { width: 8.25rem; } }
   .add { margin-top: 0.5rem; }
-  section h2 { font-size: 1.1rem; }
   @media (max-width: 480px) { dl { grid-template-columns: 1fr; } dd { margin-bottom: 0.4rem; } }
 </style>

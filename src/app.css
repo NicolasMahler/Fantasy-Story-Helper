@@ -186,3 +186,14 @@ code { font-size: 0.9em; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Page sections separated by an etched groove (a dark line with a faint highlight under it), with an amber
+   marker and an optional `.count` beside the heading. Content is indented slightly under the heading. */
+.etched { margin: 1.5rem 0; padding-left: 11px; }
+.etched::before {
+  content: ''; display: block; height: 2px; border-radius: 2px; margin: 0 0 0.9rem -11px;
+  background: var(--shade-dark); box-shadow: 0 1px 0 var(--shade-light);
+}
+.etched > h2 { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; margin: 0 0 0.6rem -11px; }
+.etched > h2::before { content: ''; flex: none; width: 3px; height: 1em; border-radius: 2px; background: var(--accent); }
+.etched > h2 .count { color: var(--muted); font-size: 0.8rem; font-weight: 400; }

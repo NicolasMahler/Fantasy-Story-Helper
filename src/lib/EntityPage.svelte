@@ -37,7 +37,19 @@
   load();
 </script>
 
-<a class="back" href={href({ name: 'series', seriesId, tab: 'entries' })}>← Entries</a>
+<div class="topbar">
+  <a class="back" href={href({ name: 'series', seriesId, tab: 'entries' })}>← Entries</a>
+  {#if entity && !editing}
+    <div class="actions">
+      <button class="small" onclick={() => (editing = true)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4M13.5 6.5l4 4" /></svg>Edit
+      </button>
+      <button class="small danger" onclick={remove}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" /></svg>Delete
+      </button>
+    </div>
+  {/if}
+</div>
 
 {#if entity === null}
   <p>This entry doesn't exist (it may have been deleted).</p>
@@ -56,11 +68,6 @@
     {#if entity.firstBook}
       <p class="muted">First appears in Book {entity.firstBook.number}: {entity.firstBook.title}</p>
     {/if}
-  </div>
-
-  <div class="row">
-    <button class="primary" onclick={() => (editing = true)}>Edit</button>
-    <button class="danger" onclick={remove}>Delete</button>
   </div>
 
   {#if entity.type.fields.some((f) => entity!.attributes[f.key] !== undefined)}
@@ -87,8 +94,8 @@
   {/if}
 
   {#if events.length}
-    <section>
-      <h2>Events</h2>
+    <section class="etched">
+      <h2>Events <span class="count">{events.length}</span></h2>
       <ul class="list compact">
         {#each events as ev, i (`${ev.eventId}:${ev.role}:${i}`)}
           <li class="ev" class:recounted={ev.mode === 'recounted'}>
@@ -103,8 +110,8 @@
 
   <Relationships {seriesId} {entityId} entityName={entity.name} />
 
-  <section>
-    <h2>Mentioned in</h2>
+  <section class="etched">
+    <h2>Mentioned in {#if mentionedIn.length}<span class="count">{mentionedIn.length}</span>{/if}</h2>
     {#if mentionedIn.length === 0}
       <p class="muted">Nothing links here yet.</p>
     {:else}
@@ -127,13 +134,18 @@
     border-radius: 999px;
     background: color-mix(in srgb, var(--c) 22%, transparent);
   }
-  .row { margin: 1rem 0; }
+  /* Edit and Delete sit quietly in the top right, beside the back link. */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.25rem; }
+  .topbar .back { margin: 0; }
+  .actions { display: flex; gap: 0.5rem; }
+  .small { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 34px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+  .small svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .head { margin-bottom: 1rem; }
   .fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0 0 1rem; }
   .fields dt { color: var(--muted); }
   .fields dd { margin: 0; }
   .pre { white-space: pre-wrap; }
   section { margin: 1.5rem 0; }
-  h2 { font-size: 1.1rem; }
   .ev { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
   .marker { color: var(--accent); }
   .recounted .marker { color: var(--muted); }
