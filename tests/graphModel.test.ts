@@ -8,7 +8,7 @@ const node = (id: number, name: string, typeId: number) => ({
   id, name, typeId, typeKey: ['', 'character', 'location', 'event', 'item'][typeId], icon: '', color: '#000',
 });
 const event = (id: number, name: string, participants: number[], bookId = 1): TimelineEvent => ({
-  id, name, mode: 'present', effectiveKey: id, manualOrder: 0, bookId, bookNumber: bookId, bookTitle: null,
+  id, name, mode: 'present', effectiveKey: id, pinned: false, manualOrder: 0, bookId, bookNumber: bookId, bookTitle: null,
   label: '', short: '', laneAgeId: null, toldBy: null,
   participants: participants.map((p) => ({ entityId: p, name: '', icon: '', typeId: 0, typeKey: '', role: 'participant' })),
 });

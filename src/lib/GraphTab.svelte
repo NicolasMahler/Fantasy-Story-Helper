@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { plural } from './text';
   import { onDestroy } from 'svelte';
   import {
     forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY,
@@ -24,11 +25,16 @@
   let width = $state(700);
   const height = $derived(width < 560 ? 420 : 540);
 
+  let loadError = $state<string | null>(null);
+
   $effect(() => {
-    rpc('getGraph', seriesId).then((d) => {
-      data = d;
-      typeIds = d.types.filter((t) => DEFAULT_TYPES.includes(t.key)).map((t) => t.id);
-    });
+    rpc('getGraph', seriesId).then(
+      (d) => {
+        data = d;
+        typeIds = d.types.filter((t) => DEFAULT_TYPES.includes(t.key)).map((t) => t.id);
+      },
+      (e: Error) => (loadError = `Couldn't load the graph: ${e.message}`),
+    );
   });
 
   const model = $derived(data ? buildGraph(data, { typeIds, bookId, minShared, showLinks }) : null);
@@ -101,7 +107,8 @@
   const zoomBy = (f: number) => svgEl && zoomer && select(svgEl).call(zoomer.scaleBy, f);
 
   // ---------- node drag / click ----------
-  let drag: { id: number; startX: number; startY: number; moved: boolean } | null = null;
+  /** `node` is looked up once on pointerdown so moves don't search the node list. */
+  let drag: { id: number; node: SimNode | undefined; startX: number; startY: number; moved: boolean } | null = null;
 
   function toSim(ev: PointerEvent) {
     const rect = svgEl!.getBoundingClientRect();
@@ -110,20 +117,20 @@
 
   function onNodeDown(ev: PointerEvent, id: number) {
     (ev.currentTarget as Element).setPointerCapture(ev.pointerId);
-    drag = { id, startX: ev.clientX, startY: ev.clientY, moved: false };
+    drag = { id, node: simNodes.find((s) => s.id === id), startX: ev.clientX, startY: ev.clientY, moved: false };
   }
   function onNodeMove(ev: PointerEvent) {
     if (!drag || !sim) return;
     if (!drag.moved && Math.hypot(ev.clientX - drag.startX, ev.clientY - drag.startY) < 4) return;
     drag.moved = true;
-    const n = simNodes.find((s) => s.id === drag!.id);
+    const n = drag.node;
     if (!n) return;
     [n.fx, n.fy] = toSim(ev);
     sim.alphaTarget(0.25).restart();
   }
   function onNodeUp() {
     if (!drag) return;
-    const n = simNodes.find((s) => s.id === drag!.id);
+    const n = drag.node;
     if (n) { n.fx = null; n.fy = null; }
     sim?.alphaTarget(0);
     if (!drag.moved) selected = selected?.kind === 'node' && selected.id === drag.id ? null : { kind: 'node', id: drag.id };
@@ -151,9 +158,12 @@
       : [],
   );
 
-  const dim = (e: ModelEdge) =>
-    (neighbours && !(neighbours.has(e.a) && neighbours.has(e.b) && (e.a === (selected as { id: number }).id || e.b === (selected as { id: number }).id)))
-    || (selectedEdge && selectedEdge.key !== e.key);
+  /** With a node selected, dim edges not touching it; with an edge selected, dim the others. */
+  const dim = (e: ModelEdge) => {
+    const id = selected?.kind === 'node' ? selected.id : null;
+    if (id !== null) return e.a !== id && e.b !== id;
+    return !!selectedEdge && selectedEdge.key !== e.key;
+  };
 
   function curve(e: ModelEdge) {
     const p = pos.get(e.a), q = pos.get(e.b);
@@ -192,7 +202,7 @@
       {/if}
       <label class="slider">Hide ties under
         <input type="range" min="1" max="5" bind:value={minShared} aria-label="Minimum shared events" />
-        <span>{minShared} {minShared === 1 ? 'event' : 'events'}</span>
+        <span>{plural(minShared, 'event')}</span>
       </label>
       <label class="check"><input type="checkbox" bind:checked={showLinks} /> Relationships</label>
     </div>
@@ -263,8 +273,8 @@
         {@const b = nodeById.get(selectedEdge.b)!}
         <h3>{a.icon} {a.name} ↔ {b.icon} {b.name}</h3>
         <p class="sub">
-          {selectedEdge.shared.length} shared {selectedEdge.shared.length === 1 ? 'event' : 'events'}{bookId ? ' in this book' : ''}
-          · {selectedEdge.links.length ? `${selectedEdge.links.length} relationship${selectedEdge.links.length === 1 ? '' : 's'}` : 'no hand-made relationship'}
+          {plural(selectedEdge.shared.length, 'shared event')}{bookId ? ' in this book' : ''}
+          · {selectedEdge.links.length ? plural(selectedEdge.links.length, 'relationship') : 'no hand-made relationship'}
         </p>
         {#each selectedEdge.links as l (l.id)}
           <div class="relline">{nodeById.get(l.from)?.name} <b>{l.kind}</b> {nodeById.get(l.to)?.name}</div>
@@ -282,7 +292,7 @@
         <a class="action" href={href({ name: 'entity', seriesId, entityId: a.id })}>+ Add a relationship (on {a.name}'s page)</a>
       {:else if selectedNode}
         <h3>{selectedNode.icon} {selectedNode.name}</h3>
-        <p class="sub">{selectedNode.degree} {selectedNode.degree === 1 ? 'connection' : 'connections'}</p>
+        <p class="sub">{plural(selectedNode.degree, 'connection')}</p>
         <ul>
           {#each nodeEdges as { edge, other } (edge.key)}
             <li>
@@ -304,7 +314,7 @@
     <span><i class="lr"></i>Relationship you added</span><span>Bigger dot = more connections</span>
   </div>
 {:else}
-  <p class="muted">Loading graph…</p>
+  <p class="muted">{loadError ?? 'Loading graph…'}</p>
 {/if}
 
 <style>

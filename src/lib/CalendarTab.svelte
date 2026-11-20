@@ -1,73 +1,70 @@
 <script lang="ts">
+  import { plural } from './text';
   import { rpc } from '../db/client';
   import type { AgeRow, AgeInput, BucketRow } from '../db/calendar';
+  import { attempt, numOrNull } from './forms';
 
   let { seriesId }: { seriesId: number } = $props();
+
+  // Number inputs bind as `number | null` (null when blank).
+  type AgeDraft = { name: string; startYear: number | null; endYear: number | null; direction: AgeInput['direction'] };
+  const emptyDraft = (): AgeDraft => ({ name: '', startYear: null, endYear: null, direction: 'forward' });
 
   let ages = $state<AgeRow[]>([]);
   let buckets = $state<BucketRow[]>([]);
   /** id of the age being edited, 'new', or null */
   let editing = $state<number | 'new' | null>(null);
-  let draft = $state({ name: '', startYear: '', endYear: '', direction: 'forward' as AgeInput['direction'] });
+  let draft = $state<AgeDraft>(emptyDraft());
   let error = $state<string | null>(null);
-  let bucketDrafts = $state<Record<string, { label: string; sortKey: string }>>({});
+  let bucketDrafts = $state<Record<string, { label: string; sortKey: number | null }>>({});
   let bucketMsg = $state<string | null>(null);
 
   async function load() {
     [ages, buckets] = await Promise.all([rpc('listAges', seriesId), rpc('listBuckets', seriesId)]);
-    bucketDrafts = Object.fromEntries(buckets.map((b) => [b.bucket, { label: b.label, sortKey: String(b.sort_key) }]));
+    bucketDrafts = Object.fromEntries(buckets.map((b) => [b.bucket, { label: b.label, sortKey: b.sort_key }]));
   }
 
   function open(a: AgeRow | null) {
     error = null;
     editing = a ? a.id : 'new';
-    draft = a
-      ? { name: a.name, startYear: String(a.start_year), endYear: a.end_year === null ? '' : String(a.end_year), direction: a.direction }
-      : { name: '', startYear: '', endYear: '', direction: 'forward' };
+    draft = a ? { name: a.name, startYear: a.start_year, endYear: a.end_year, direction: a.direction } : emptyDraft();
   }
-
-  const toInt = (s: string) => (s.trim() === '' ? Number.NaN : Number(s));
 
   async function saveAge(ev: SubmitEvent) {
     ev.preventDefault();
     error = null;
     const input: AgeInput = {
       name: draft.name,
-      startYear: toInt(draft.startYear),
-      endYear: draft.endYear.trim() === '' ? null : toInt(draft.endYear),
+      // A blank start year becomes NaN so the server rejects it with a readable message.
+      startYear: numOrNull(draft.startYear) ?? Number.NaN,
+      endYear: numOrNull(draft.endYear),
       direction: draft.direction,
     };
-    try {
+    await attempt(async () => {
       if (editing === 'new') await rpc('createAge', seriesId, input);
       else if (editing !== null) await rpc('updateAge', editing, input);
       editing = null;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   async function removeAge(a: AgeRow) {
     if (!confirm(`Delete the age “${a.name}”?`)) return;
-    try {
+    await attempt(async () => {
       await rpc('deleteAge', a.id);
       editing = null;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   async function saveBucket(b: BucketRow) {
     bucketMsg = null;
     const d = bucketDrafts[b.bucket];
-    try {
-      await rpc('updateBucket', seriesId, b.bucket, { label: d.label, sortKey: Number(d.sortKey === '' ? Number.NaN : d.sortKey) });
+    await attempt(async () => {
+      await rpc('updateBucket', seriesId, b.bucket, { label: d.label, sortKey: numOrNull(d.sortKey) ?? Number.NaN });
       await load();
       bucketMsg = `Saved “${d.label}”.`;
-    } catch (e) {
-      bucketMsg = (e as Error).message;
-    }
+    }, (m) => (bucketMsg = m));
   }
 
   const range = (a: AgeRow) =>
@@ -96,7 +93,7 @@
           <div class="row">
             <div class="grow">
               <strong>{a.name}</strong>
-              <small class="muted">{range(a)} · counts {a.direction === 'forward' ? 'up' : 'down'} · {a.usage} {a.usage === 1 ? 'event' : 'events'}</small>
+              <small class="muted">{range(a)} · counts {a.direction === 'forward' ? 'up' : 'down'} · {plural(a.usage, 'event')}</small>
             </div>
             <button class="ghost" onclick={() => open(a)}>Edit</button>
           </div>
@@ -124,7 +121,7 @@
             <label class="pos">Position <input type="number" step="any" bind:value={bucketDrafts[b.bucket].sortKey} /></label>
             <button class="ghost save">Save</button>
           </form>
-          <small class="muted">{b.bucket} · {b.usage} {b.usage === 1 ? 'event' : 'events'}</small>
+          <small class="muted">{b.bucket} · {plural(b.usage, 'event')}</small>
         </li>
       {/if}
     {/each}

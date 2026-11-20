@@ -1,5 +1,6 @@
 /** Pure layout for the Timeline tab: filtering, story/reading grouping, the story × reading chart. */
 import type { AgeInfo } from '../db/dates';
+import { plural } from './text';
 import type { TimelineBook, TimelineEvent } from '../db/timeline';
 
 export interface Filters {
@@ -37,7 +38,7 @@ export function formatSpan(years: number): string {
   const y = Math.abs(years);
   if (y < 10) {
     const r = Math.round(y * 10) / 10;
-    return `${r} ${r === 1 ? 'year' : 'years'}`;
+    return plural(r, 'year');
   }
   return `~${Number(y.toPrecision(2)).toLocaleString('en-US')} years`;
 }

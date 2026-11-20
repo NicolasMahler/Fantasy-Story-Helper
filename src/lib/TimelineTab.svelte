@@ -36,11 +36,16 @@
   /** Which filter control is open. */
   let adding = $state<'character' | 'location' | null>(null);
 
+  let loadError = $state<string | null>(null);
+
   $effect(() => {
-    Promise.all([rpc('getTimeline', seriesId), rpc('listTypes', seriesId)]).then(([d, t]) => {
-      data = d;
-      types = t;
-    });
+    Promise.all([rpc('getTimeline', seriesId), rpc('listTypes', seriesId)]).then(
+      ([d, t]) => {
+        data = d;
+        types = t;
+      },
+      (e: Error) => (loadError = `Couldn't load the timeline: ${e.message}`),
+    );
   });
 
   function setView(v: View) {
@@ -119,7 +124,7 @@
     <div class="legend"><span><i></i>In the story</span><span><i class="h"></i>Recounted</span><span>Tap an event for details</span></div>
   {/if}
 {:else}
-  <p class="muted">Loading timeline…</p>
+  <p class="muted">{loadError ?? 'Loading timeline…'}</p>
 {/if}
 
 <style>

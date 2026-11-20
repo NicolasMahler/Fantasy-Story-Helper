@@ -1,10 +1,14 @@
 import type { SqlDb } from './types';
 import schemaV1 from './schema.sql?raw';
 
-/** Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one. */
-/** 002: app-level key/value settings (e.g. last_export_at). Not part of JSON dumps. */
+/** v2: app-level key/value settings (e.g. last_export_at). Not part of JSON dumps. */
 const appMeta = 'CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;';
 
+/**
+ * Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one.
+ *   v1: schema.sql (initial schema)
+ *   v2: app_meta
+ */
 export const MIGRATIONS: string[] = [schemaV1, appMeta];
 
 export function currentVersion(db: SqlDb): number {

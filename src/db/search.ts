@@ -1,5 +1,7 @@
 import type { SqlDb } from './types';
 import type { FieldDef } from './entityTypes';
+import { stripMentions } from './mentions';
+import { likeEscape } from './sql';
 
 export interface Snippet {
   text: string;
@@ -22,13 +24,12 @@ export interface SearchResult {
   snippet: Snippet | null;
 }
 
-const MENTION_RE = /@\[([^\]\n]*)\]\((\d+)\)/g;
 const BEFORE = 40;
 const AFTER = 70;
 
 /** Snippet around the first match, with `@` links shown as their names. */
 export function makeSnippet(text: string, q: string): Snippet {
-  const plain = text.replace(MENTION_RE, '$1').replace(/\s+/g, ' ').trim();
+  const plain = stripMentions(text).replace(/\s+/g, ' ').trim();
   const idx = plain.toLowerCase().indexOf(q.toLowerCase());
   if (idx < 0) return { text: plain.length > BEFORE + AFTER ? `${plain.slice(0, BEFORE + AFTER)}…` : plain, start: 0, length: 0 };
   const from = Math.max(0, idx - BEFORE);
@@ -36,8 +37,6 @@ export function makeSnippet(text: string, q: string): Snippet {
   const prefix = from > 0 ? '…' : '';
   return { text: `${prefix}${plain.slice(from, to)}${to < plain.length ? '…' : ''}`, start: idx - from + prefix.length, length: q.length };
 }
-
-const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 /** Search one series (or everything when `seriesId` is null). Best matches first. */
 export function search(db: SqlDb, opts: { seriesId: number | null; q: string; limit?: number }): SearchResult[] {
@@ -74,6 +73,15 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
        OR e.id IN (SELECT from_entity_id FROM entity_link WHERE kind LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\'))`,
     [...scopeParams, like, like, like, like, like],
   );
+  // First matching relationship per entity, fetched in one query rather than one per entity.
+  const linkHits = new Map<number, { kind: string; note: string; other: string }>();
+  for (const l of db.query<{ from_id: number; kind: string; note: string; other: string }>(
+    `SELECT l.from_entity_id AS from_id, l.kind, l.note, o.name AS other
+     FROM entity_link l JOIN entity e ON e.id = l.from_entity_id JOIN entity o ON o.id = l.to_entity_id
+     WHERE ${scope} AND (l.kind LIKE ? ESCAPE '\\' OR l.note LIKE ? ESCAPE '\\') ORDER BY l.id`,
+    [...scopeParams, like, like],
+  )) if (!linkHits.has(l.from_id)) linkHits.set(l.from_id, l);
+
   for (const e of entities) {
     const base = { kind: 'entity' as const, id: e.id, seriesId: e.series_id, name: e.name, icon: e.icon, color: e.color, typeName: e.type_name };
     const name = e.name.toLowerCase();
@@ -81,7 +89,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       ranked.push({ rank: name.startsWith(ql) ? 0 : 1, r: { ...base, field: 'name', snippet: null } });
       continue;
     }
-    if (e.description.replace(MENTION_RE, '$1').toLowerCase().includes(ql)) {
+    if (stripMentions(e.description).toLowerCase().includes(ql)) {
       ranked.push({ rank: 2, r: { ...base, field: 'description', snippet: makeSnippet(e.description, q) } });
       continue;
     }
@@ -93,11 +101,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       ranked.push({ rank: 2, r: { ...base, field: label, snippet: makeSnippet(String(hit[1]), q) } });
       continue;
     }
-    const link = db.query<{ kind: string; note: string; other: string }>(
-      `SELECT l.kind, l.note, o.name AS other FROM entity_link l JOIN entity o ON o.id = l.to_entity_id
-       WHERE l.from_entity_id = ? AND (l.kind LIKE ? ESCAPE '\\' OR l.note LIKE ? ESCAPE '\\') LIMIT 1`,
-      [e.id, like, like],
-    )[0];
+    const link = linkHits.get(e.id);
     if (link) {
       const text = `${link.kind} ${link.other}${link.note ? `: ${link.note}` : ''}`;
       ranked.push({ rank: 3, r: { ...base, field: 'relationship', snippet: makeSnippet(text, q) } });

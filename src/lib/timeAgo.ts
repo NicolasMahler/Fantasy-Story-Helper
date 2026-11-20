@@ -1,3 +1,5 @@
+import { plural } from './text';
+
 /** "just now", "5 minutes ago", "3 days ago", "2 months ago". */
 export function timeAgo(iso: string, now = new Date()): string {
   const s = Math.max(0, (now.getTime() - Date.parse(iso)) / 1000);
@@ -7,7 +9,7 @@ export function timeAgo(iso: string, now = new Date()): string {
   for (const [size, name] of units) {
     if (v < size) {
       const n = Math.round(v);
-      return `${n} ${name}${n === 1 ? '' : 's'} ago`;
+      return `${plural(n, name)} ago`;
     }
     v /= size;
   }

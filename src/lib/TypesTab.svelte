@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { plural } from './text';
   import { rpc } from '../db/client';
   import { FIELD_KINDS, slugify, type EntityTypeRow, type TypeInput } from '../db/entityTypes';
+  import { attempt } from './forms';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -27,25 +29,21 @@
     error = null;
     // New fields get their key from the label; existing fields keep theirs so stored values stay attached.
     const input = { ...draft, fields: draft.fields.map((f) => ({ ...f, key: f.key || slugify(f.label) })) };
-    try {
+    await attempt(async () => {
       if (editing === 'new') await rpc('createType', seriesId, input);
       else if (editing !== null) await rpc('updateType', editing, input);
       editing = null;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   async function remove(t: EntityTypeRow) {
     if (!confirm(`Delete the “${t.name}” type?`)) return;
-    try {
+    await attempt(async () => {
       await rpc('deleteType', t.id);
       editing = null;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   load();
@@ -64,7 +62,7 @@
           <div class="grow">
             <strong>{t.name}</strong> <code class="muted">@{t.key}:</code>
             <small class="muted">
-              {t.usage} {t.usage === 1 ? 'entry' : 'entries'}{t.fields.length ? ` · ${t.fields.map((f) => f.label).join(', ')}` : ''}{t.is_builtin ? ' · built-in' : ''}
+              {plural(t.usage, 'entry', 'entries')}{t.fields.length ? ` · ${t.fields.map((f) => f.label).join(', ')}` : ''}{t.is_builtin ? ' · built-in' : ''}
             </small>
           </div>
           <button class="ghost" onclick={() => open(t)}>Edit</button>

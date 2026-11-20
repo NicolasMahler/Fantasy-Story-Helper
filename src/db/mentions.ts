@@ -1,5 +1,8 @@
-/** Stored form of a link inside a description: `@[Label](id)`. */
-const MENTION_RE = /@\[([^\]\n]*)\]\((\d+)\)/g;
+/** Stored form of a link inside a description: `@[Label](id)`. Group 1 = label, group 2 = id. */
+export const MENTION_RE = /@\[([^\]\n]*)\]\((\d+)\)/g;
+
+/** Text with every `@[Label](id)` link replaced by its label. */
+export const stripMentions = (text: string): string => text.replace(MENTION_RE, '$1');
 
 export type Segment =
   | { kind: 'text'; text: string }

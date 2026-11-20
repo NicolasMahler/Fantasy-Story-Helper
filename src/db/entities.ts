@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId, likeEscape } from './sql';
 import type { FieldDef } from './entityTypes';
 import { parseMentionIds } from './mentions';
 import { freezeDependents, recomputeSeries } from './events';
@@ -48,7 +49,9 @@ export interface EntityListItem {
   first_book_number: number | null;
 }
 
-const lastId = (db: SqlDb) => db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+const LIST_SELECT = `
+  SELECT e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color, b.number AS first_book_number
+  FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id`;
 
 function cleanName(name: string): string {
   const n = name.trim();
@@ -84,7 +87,7 @@ export function createEntity(db: SqlDb, input: EntityInput): number {
       `INSERT INTO entity (series_id, type_id, name, description, first_book_id, attributes) VALUES (?, ?, ?, ?, ?, ?)`,
       [input.seriesId, input.typeId, name, description, input.firstBookId ?? null, JSON.stringify(input.attributes ?? {})],
     );
-    const id = lastId(db);
+    const id = insertId(db);
     if (key === 'event') db.exec('INSERT INTO event (entity_id) VALUES (?)', [id]); // rule 2
     rebuildMentions(db, id, input.seriesId, description);
     return id;
@@ -105,6 +108,8 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
     if (patch.description !== undefined) set('description', patch.description);
     if (patch.firstBookId !== undefined) set('first_book_id', patch.firstBookId);
     if (patch.attributes !== undefined) set('attributes', JSON.stringify(patch.attributes));
+    // Sort keys only depend on event rows, so only an Event ↔ non-Event retype can change them.
+    let eventsChanged = false;
     if (patch.typeId !== undefined && patch.typeId !== cur.type_id) {
       const wasEvent = typeKey(db, cur.series_id, cur.type_id) === 'event';
       const isEvent = typeKey(db, cur.series_id, patch.typeId) === 'event';
@@ -114,27 +119,40 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
         freezeDependents(db, id);
         db.exec('DELETE FROM event WHERE entity_id = ?', [id]);
       }
+      eventsChanged = wasEvent !== isEvent;
     }
     sets.push(`updated_at = datetime('now')`);
     db.exec(`UPDATE entity SET ${sets.join(', ')} WHERE id = ?`, [...params, id]);
     if (patch.description !== undefined) rebuildMentions(db, id, cur.series_id, patch.description);
-    recomputeSeries(db, cur.series_id);
+    if (eventsChanged) recomputeSeries(db, cur.series_id);
   });
 }
 
 export function deleteEntity(db: SqlDb, id: number): void {
   db.transaction(() => {
-    const [cur] = db.query<{ series_id: number }>('SELECT series_id FROM entity WHERE id = ?', [id]);
+    const [cur] = db.query<{ series_id: number; is_event: number }>(
+      'SELECT series_id, EXISTS (SELECT 1 FROM event WHERE entity_id = entity.id) AS is_event FROM entity WHERE id = ?',
+      [id],
+    );
     if (!cur) return;
-    freezeDependents(db, id);
+    if (cur.is_event) freezeDependents(db, id);
     db.exec('DELETE FROM entity WHERE id = ?', [id]);
-    recomputeSeries(db, cur.series_id);
+    if (cur.is_event) recomputeSeries(db, cur.series_id);
   });
 }
 
+/** Columns of the getEntity query. */
+interface EntityRow {
+  id: number; series_id: number; type_id: number; name: string; description: string; first_book_id: number | null;
+  attributes: string; created_at: string; updated_at: string;
+  t_key: string; t_name: string; t_icon: string; t_color: string; t_fields: string;
+  b_number: number | null; b_title: string | null;
+}
+
 export function getEntity(db: SqlDb, id: number): EntityDetail | null {
-  const [row] = db.query<Record<string, unknown>>(
-    `SELECT e.*, t.key AS t_key, t.name AS t_name, t.icon AS t_icon, t.color AS t_color, t.field_schema AS t_fields,
+  const [row] = db.query<EntityRow>(
+    `SELECT e.id, e.series_id, e.type_id, e.name, e.description, e.first_book_id, e.attributes, e.created_at, e.updated_at,
+            t.key AS t_key, t.name AS t_name, t.icon AS t_icon, t.color AS t_color, t.field_schema AS t_fields,
             b.number AS b_number, b.title AS b_title
      FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id
      WHERE e.id = ?`,
@@ -149,25 +167,23 @@ export function getEntity(db: SqlDb, id: number): EntityDetail | null {
     [id],
   )) links[l.id] = l;
   return {
-    id: row.id as number,
-    series_id: row.series_id as number,
-    name: row.name as string,
-    description: row.description as string,
-    first_book_id: row.first_book_id as number | null,
-    attributes: JSON.parse(row.attributes as string),
-    created_at: row.created_at as string,
-    updated_at: row.updated_at as string,
+    id: row.id,
+    series_id: row.series_id,
+    name: row.name,
+    description: row.description,
+    first_book_id: row.first_book_id,
+    attributes: JSON.parse(row.attributes) as Attributes,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
     type: {
-      id: row.type_id as number,
-      key: row.t_key as string,
-      name: row.t_name as string,
-      icon: row.t_icon as string,
-      color: row.t_color as string,
-      fields: JSON.parse(row.t_fields as string),
+      id: row.type_id,
+      key: row.t_key,
+      name: row.t_name,
+      icon: row.t_icon,
+      color: row.t_color,
+      fields: JSON.parse(row.t_fields) as FieldDef[],
     },
-    firstBook: row.first_book_id
-      ? { id: row.first_book_id as number, number: row.b_number as number, title: row.b_title as string }
-      : null,
+    firstBook: row.first_book_id ? { id: row.first_book_id, number: row.b_number!, title: row.b_title! } : null,
     links,
   };
 }
@@ -179,12 +195,6 @@ export function backlinks(db: SqlDb, id: number): EntityListItem[] {
     [id],
   );
 }
-
-const LIST_SELECT = `
-  SELECT e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color, b.number AS first_book_number
-  FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id`;
-
-const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 export function listEntities(db: SqlDb, seriesId: number, filter: { typeId?: number | null; search?: string } = {}): EntityListItem[] {
   const where = ['e.series_id = ?'];
@@ -200,14 +210,14 @@ export function listEntities(db: SqlDb, seriesId: number, filter: { typeId?: num
   return db.query<EntityListItem>(`${LIST_SELECT} WHERE ${where.join(' AND ')} ORDER BY e.name COLLATE NOCASE`, params);
 }
 
-/** Autocomplete for `@`: prefix matches first, then substring matches. `typeKey` narrows to one type. */
-export function searchEntities(db: SqlDb, seriesId: number, typeKey: string | null, term: string, limit = 8): EntityListItem[] {
+/** Autocomplete for `@`: prefix matches first, then substring matches. `typeFilter` (a type key) narrows to one type. */
+export function searchEntities(db: SqlDb, seriesId: number, typeFilter: string | null, term: string, limit = 8): EntityListItem[] {
   const where = ['e.series_id = ?', `e.name LIKE ? ESCAPE '\\'`];
   const t = likeEscape(term.trim());
   const params: unknown[] = [seriesId, `%${t}%`];
-  if (typeKey) {
+  if (typeFilter) {
     where.push('t.key = ?');
-    params.push(typeKey);
+    params.push(typeFilter);
   }
   return db.query<EntityListItem>(
     `${LIST_SELECT} WHERE ${where.join(' AND ')}

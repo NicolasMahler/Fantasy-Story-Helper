@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 import {
   computeSortKeys, wouldCreateCycle, formatDate,
   type AgeInfo, type BucketInfo, type DatePrecision, type EventDate,
@@ -74,21 +75,22 @@ function seriesEvents(db: SqlDb, seriesId: number): Map<number, EventRow> {
   return new Map(rows.map((r) => [r.entity_id, r]));
 }
 
-function calendar(db: SqlDb, seriesId: number) {
-  const ages = new Map(
-    db.query<AgeInfo>('SELECT id, name, start_year, end_year, direction FROM age WHERE series_id = ?', [seriesId])
-      .map((a) => [a.id, a]),
+/** A series' ages (by start, plus by id) and vague-date buckets (by key). */
+export function loadCalendar(db: SqlDb, seriesId: number) {
+  const ageList = db.query<AgeInfo>(
+    'SELECT id, name, start_year, end_year, direction FROM age WHERE series_id = ? ORDER BY start_year, id',
+    [seriesId],
   );
   const buckets = new Map(
     db.query<BucketInfo & { bucket: string }>('SELECT bucket, label, sort_key FROM bucket_default WHERE series_id = ?', [seriesId])
       .map((b) => [b.bucket, b]),
   );
-  return { ages, buckets };
+  return { ageList, ages: new Map(ageList.map((a) => [a.id, a])), buckets };
 }
 
 /** Returns a function that labels any event row of the series. */
 function labeller(db: SqlDb, seriesId: number) {
-  const { ages, buckets } = calendar(db, seriesId);
+  const { ages, buckets } = loadCalendar(db, seriesId);
   const names = new Map(
     db.query<{ id: number; name: string }>(
       `SELECT e.id, e.name FROM entity e JOIN event ev ON ev.entity_id = e.id WHERE e.series_id = ?`,
@@ -101,7 +103,7 @@ function labeller(db: SqlDb, seriesId: number) {
 /** Recomputes sort_key for every event in the series (rule 4). */
 export function recomputeSeries(db: SqlDb, seriesId: number): void {
   const events = seriesEvents(db, seriesId);
-  const { ages, buckets } = calendar(db, seriesId);
+  const { ages, buckets } = loadCalendar(db, seriesId);
   const keys = computeSortKeys(events, ages, buckets);
   for (const [id, key] of keys) {
     if (events.get(id)!.sort_key !== key) db.exec('UPDATE event SET sort_key = ? WHERE entity_id = ?', [key, id]);
@@ -268,18 +270,26 @@ export function addParticipant(db: SqlDb, eventId: number, entityId: number, rol
       throw new Error(`${ent.name} is already listed as ${r}.`);
     }
     db.exec('INSERT INTO event_participant (event_id, entity_id, role) VALUES (?, ?, ?)', [eventId, entityId, r]);
-    return db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+    return insertId(db);
   });
 }
 
 export function updateParticipantRole(db: SqlDb, participantId: number, role: string): void {
   const r = role.trim();
   if (!r) throw new Error('Role is required.');
-  try {
+  db.transaction(() => {
+    const [p] = db.query<{ event_id: number; entity_id: number; name: string }>(
+      'SELECT p.event_id, p.entity_id, e.name FROM event_participant p JOIN entity e ON e.id = p.entity_id WHERE p.id = ?',
+      [participantId],
+    );
+    if (!p) throw new Error('That participant no longer exists.');
+    const dup = db.query(
+      'SELECT 1 FROM event_participant WHERE event_id = ? AND entity_id = ? AND role = ? AND id <> ?',
+      [p.event_id, p.entity_id, r, participantId],
+    ).length;
+    if (dup) throw new Error(`${p.name} is already listed as ${r}.`);
     db.exec('UPDATE event_participant SET role = ? WHERE id = ?', [r, participantId]);
-  } catch {
-    throw new Error(`That entry is already listed as ${r}.`);
-  }
+  });
 }
 
 export function removeParticipant(db: SqlDb, participantId: number): void {

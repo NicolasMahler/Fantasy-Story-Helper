@@ -14,7 +14,7 @@ const ages: AgeInfo[] = [
 let n = 0;
 function ev(p: Partial<TimelineEvent> & { name: string }): TimelineEvent {
   return {
-    id: ++n, mode: 'present', effectiveKey: null, manualOrder: 0, bookId: null, bookNumber: null, bookTitle: null,
+    id: ++n, mode: 'present', effectiveKey: null, pinned: false, manualOrder: 0, bookId: null, bookNumber: null, bookTitle: null,
     label: '', short: '', laneAgeId: null, toldBy: null, participants: [], ...p,
   };
 }

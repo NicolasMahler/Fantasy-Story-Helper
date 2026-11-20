@@ -98,6 +98,22 @@ describe('updateEntity', () => {
     updateEntity(db, id, { typeId: typeId('lore') });
     expect(count('SELECT COUNT(*) AS n FROM event WHERE entity_id = ?', [id])).toBe(0);
   });
+
+  it('only recomputes timeline positions when an entry becomes or stops being an event', () => {
+    const ev = createEntity(db, { seriesId, typeId: typeId('event'), name: 'Fall' });
+    const hero = createEntity(db, { seriesId, typeId: typeId('character'), name: 'Hero' });
+    // A stale key that a recompute would reset to null (the event is undated).
+    db.exec('UPDATE event SET sort_key = 42 WHERE entity_id = ?', [ev]);
+    const sortKey = () => db.query<{ k: number | null }>('SELECT sort_key AS k FROM event WHERE entity_id = ?', [ev])[0].k;
+    updateEntity(db, hero, { name: 'Heroine', description: 'Brave.' });
+    updateEntity(db, ev, { name: 'The Fall' });
+    updateEntity(db, hero, { typeId: typeId('lore') });
+    deleteEntity(db, hero);
+    expect(sortKey()).toBe(42);
+    const myth = createEntity(db, { seriesId, typeId: typeId('lore'), name: 'Myth' });
+    updateEntity(db, myth, { typeId: typeId('event') });
+    expect(sortKey()).toBeNull();
+  });
 });
 
 describe('listEntities / searchEntities', () => {

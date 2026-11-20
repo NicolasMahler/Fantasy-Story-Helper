@@ -65,6 +65,30 @@ describe('search', () => {
     ]);
   });
 
+  it('finds several entries that match only through relationships, using each one\'s first matching link', () => {
+    const c = typeId('character');
+    const a = createEntity(db, { seriesId, typeId: c, name: 'Anomander' });
+    const b = createEntity(db, { seriesId, typeId: c, name: 'Brood' });
+    const d = createEntity(db, { seriesId, typeId: c, name: 'Draconus' });
+    createLink(db, { fromId: a, toId: d, kind: 'sworn foe' });
+    createLink(db, { fromId: a, toId: b, kind: 'sworn ally' });
+    createLink(db, { fromId: b, toId: a, kind: 'sworn ally' });
+    const r = search(db, { seriesId, q: 'sworn' });
+    expect(r.map((x) => `${x.name}:${x.field}:${x.snippet?.text}`)).toEqual([
+      'Anomander:relationship:sworn foe Draconus',
+      'Brood:relationship:sworn ally Anomander',
+    ]);
+  });
+
+  it('does not use relationships from other series', () => {
+    const other = createSeries(db, { name: 'Other' });
+    const t = db.query<{ id: number }>(`SELECT id FROM entity_type WHERE series_id = ? AND key = 'item'`, [other])[0].id;
+    const x = createEntity(db, { seriesId: other, typeId: t, name: 'X' });
+    const y = createEntity(db, { seriesId: other, typeId: t, name: 'Y' });
+    createLink(db, { fromId: x, toId: y, kind: 'partners' });
+    expect(search(db, { seriesId, q: 'partners' }).map((r) => r.name)).toEqual(['Quick Ben']);
+  });
+
   it('ignores blank queries and treats wildcards literally', () => {
     expect(search(db, { seriesId, q: '  ' })).toEqual([]);
     expect(search(db, { seriesId, q: '%' })).toEqual([]);

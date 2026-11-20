@@ -4,6 +4,7 @@
   import { parseAtQuery, formatMention, type AtQuery } from '../db/mentions';
   import type { EntityListItem } from '../db/entities';
   import type { EntityTypeRow } from '../db/entityTypes';
+  import { attempt, listKey } from './forms';
 
   let {
     value = $bindable(''),
@@ -13,6 +14,7 @@
     id,
   }: { value: string; seriesId: number; types: EntityTypeRow[]; rows?: number; id?: string } = $props();
 
+  const listId = $props.id();
   let ta: HTMLTextAreaElement;
   let query = $state<AtQuery | null>(null);
   let results = $state<EntityListItem[]>([]);
@@ -74,13 +76,9 @@
 
   async function create() {
     if (!query || createTypeId === null) return;
-    try {
-      const name = query.term.trim();
-      const newId = await rpc('createEntity', { seriesId, typeId: createTypeId, name });
-      await insert(name, newId);
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    const name = query.term.trim();
+    const typeId = createTypeId;
+    await attempt(async () => insert(name, await rpc('createEntity', { seriesId, typeId, name })), (m) => (error = m));
   }
 
   function onkeydown(ev: KeyboardEvent) {
@@ -97,11 +95,11 @@
       }
       return;
     }
-    if (ev.key === 'ArrowDown') active = (active + 1) % optionCount;
-    else if (ev.key === 'ArrowUp') active = (active - 1 + optionCount) % optionCount;
-    else if (ev.key === 'Enter' || ev.key === 'Tab') choose(active);
-    else if (ev.key === 'Escape') query = null;
-    else return;
+    const r = listKey(ev.key, active, optionCount, { pickOnTab: true });
+    if (r === null) return;
+    if (r === 'pick') choose(active);
+    else if (r === 'close') query = null;
+    else active = r;
     ev.preventDefault();
   }
 </script>
@@ -119,7 +117,7 @@
     onblur={() => setTimeout(() => { if (!creating) query = null; }, 150)}
     role="combobox"
     aria-expanded={open}
-    aria-controls="mention-list"
+    aria-controls={listId}
     aria-autocomplete="list"
   ></textarea>
 
@@ -134,7 +132,7 @@
       {#if error}<p class="error">{error}</p>{/if}
     </div>
   {:else if open}
-    <ul class="popup" id="mention-list" role="listbox">
+    <ul class="popup" id={listId} role="listbox">
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => choose(i)}>

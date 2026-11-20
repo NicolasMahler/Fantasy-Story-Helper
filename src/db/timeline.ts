@@ -1,6 +1,6 @@
 import type { SqlDb } from './types';
-import { containingAge, formatDate, yearInAge, type AgeInfo, type BucketInfo, type EventDate } from './dates';
-import type { EventMode } from './events';
+import { containingAge, formatDate, yearInAge, type AgeInfo, type EventDate } from './dates';
+import { loadCalendar, type EventMode } from './events';
 
 export interface TimelineParticipant {
   entityId: number;
@@ -16,6 +16,8 @@ export interface TimelineEvent {
   name: string;
   mode: EventMode;
   effectiveKey: number | null;
+  /** Position set by hand (sort_key_override) rather than computed from the date. */
+  pinned: boolean;
   manualOrder: number;
   bookId: number | null;
   bookNumber: number | null;
@@ -50,15 +52,7 @@ type Row = EventDate & {
 
 /** Everything the Timeline tab needs for one series, in one read. */
 export function getTimeline(db: SqlDb, seriesId: number): TimelineData {
-  const ages = db.query<AgeInfo>(
-    'SELECT id, name, start_year, end_year, direction FROM age WHERE series_id = ? ORDER BY start_year, id',
-    [seriesId],
-  );
-  const ageMap = new Map(ages.map((a) => [a.id, a]));
-  const buckets = new Map(
-    db.query<BucketInfo & { bucket: string }>('SELECT bucket, label, sort_key FROM bucket_default WHERE series_id = ?', [seriesId])
-      .map((b) => [b.bucket, b]),
-  );
+  const { ageList: ages, ages: ageMap, buckets } = loadCalendar(db, seriesId);
   const books = db.query<TimelineBook>('SELECT id, number, title FROM book WHERE series_id = ? ORDER BY number', [seriesId]);
 
   const rows = db.query<Row>(
@@ -101,6 +95,7 @@ export function getTimeline(db: SqlDb, seriesId: number): TimelineData {
       name: r.name,
       mode: r.mode,
       effectiveKey: key,
+      pinned: r.sort_key_override !== null,
       manualOrder: r.manual_order,
       bookId: r.book_id,
       bookNumber: r.b_number,

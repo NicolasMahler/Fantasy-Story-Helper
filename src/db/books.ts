@@ -1,4 +1,5 @@
 import type { SqlDb } from './types';
+import { insertId } from './sql';
 
 export interface BookRow {
   id: number;
@@ -35,7 +36,7 @@ export function addBook(db: SqlDb, seriesId: number, title: string): number {
        VALUES (?, (SELECT COALESCE(MAX(number), 0) + 1 FROM book WHERE series_id = ?), ?)`,
       [seriesId, seriesId, t],
     );
-    return db.query<{ id: number }>('SELECT last_insert_rowid() AS id')[0].id;
+    return insertId(db);
   });
 }
 

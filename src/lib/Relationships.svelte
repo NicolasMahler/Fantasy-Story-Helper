@@ -3,6 +3,7 @@
   import { LINK_KINDS, type LinkRow } from '../db/links';
   import { href } from './route';
   import EntityPicker from './EntityPicker.svelte';
+  import { attempt } from './forms';
 
   let { seriesId, entityId, entityName }: { seriesId: number; entityId: number; entityName: string } = $props();
 
@@ -35,22 +36,22 @@
       error = 'Choose the other entry.';
       return;
     }
-    try {
+    await attempt(async () => {
       await rpc('createLink', {
-        fromId: entityId, toId: target.id, kind, note, startEventId: from?.id ?? null, endEventId: until?.id ?? null,
+        fromId: entityId, toId: target!.id, kind, note, startEventId: from?.id ?? null, endEventId: until?.id ?? null,
       });
       reset();
       adding = false;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   async function remove(l: LinkRow) {
     if (!confirm(`Remove “${l.kind}” between ${entityName} and ${l.other.name}?`)) return;
-    await rpc('deleteLink', l.id);
-    await load();
+    await attempt(async () => {
+      await rpc('deleteLink', l.id);
+      await load();
+    }, (m) => alert(`Couldn't remove: ${m}`));
   }
 
   $effect(() => {

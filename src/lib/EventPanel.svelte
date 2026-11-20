@@ -7,6 +7,7 @@
   import { DATE_PRECISIONS, type DatePrecision } from '../db/dates';
   import { href } from './route';
   import EntityPicker from './EntityPicker.svelte';
+  import { attempt, numOrNull } from './forms';
 
   let { seriesId, eventId }: { seriesId: number; eventId: number } = $props();
 
@@ -19,19 +20,19 @@
   let pError = $state<string | null>(null);
   let newRole = $state('');
 
-  // Form draft (strings for number inputs so blanks are possible).
+  // Form draft. Number inputs bind as `number | null` (null when blank).
   let mode = $state<EventMode>('present');
   let bookId = $state<number | null>(null);
   let toldBy = $state<{ id: number; name: string } | null>(null);
   let precision = $state<DatePrecision | null>(null);
-  let year = $state('');
+  let year = $state<number | null>(null);
   let ageId = $state<number | null>(null);
   let relTarget = $state<{ id: number; name: string } | null>(null);
-  let relYears = $state('0');
+  let relYears = $state<number | null>(0);
   let relDir = $state<1 | -1>(1);
   let bucket = $state<string | null>(null);
-  let pin = $state('');
-  let tiebreak = $state('0');
+  let pin = $state<number | null>(null);
+  let tiebreak = $state<number | null>(0);
 
   async function load() {
     [detail, ages, books, buckets] = await Promise.all([
@@ -46,19 +47,17 @@
     bookId = d.book?.id ?? null;
     toldBy = d.toldBy;
     precision = d.datePrecision;
-    year = d.year === null ? '' : String(d.year);
+    year = d.year;
     ageId = d.ageId;
     relTarget = d.relativeTarget;
-    relYears = String(Math.abs(d.offsetYears ?? 0));
+    relYears = Math.abs(d.offsetYears ?? 0);
     relDir = (d.offsetYears ?? 0) < 0 ? -1 : 1;
     bucket = d.bucket ?? buckets[0]?.bucket ?? null;
-    pin = d.sortKeyOverride === null ? '' : String(d.sortKeyOverride);
-    tiebreak = String(d.manualOrder);
+    pin = d.sortKeyOverride;
+    tiebreak = d.manualOrder;
     error = null;
     editing = true;
   }
-
-  const num = (s: string) => (String(s).trim() === '' ? null : Number(s));
 
   async function save(ev: SubmitEvent) {
     ev.preventDefault();
@@ -68,31 +67,27 @@
       bookId,
       toldById: toldBy?.id ?? null,
       datePrecision: precision,
-      year: num(year),
+      year: numOrNull(year),
       ageId,
       relativeTo: relTarget?.id ?? null,
-      offsetYears: (num(relYears) ?? 0) * relDir,
+      offsetYears: (numOrNull(relYears) ?? 0) * relDir,
       bucket,
-      sortKeyOverride: num(pin),
-      manualOrder: num(tiebreak) ?? 0,
+      sortKeyOverride: numOrNull(pin), // blank = not pinned
+      manualOrder: numOrNull(tiebreak) ?? 0,
     };
-    try {
+    await attempt(async () => {
       await rpc('saveEvent', eventId, input);
       editing = false;
       await load();
-    } catch (e) {
-      error = (e as Error).message;
-    }
+    }, (m) => (error = m));
   }
 
   async function participantOp(fn: () => Promise<unknown>) {
     pError = null;
-    try {
+    await attempt(async () => {
       await fn();
       await load();
-    } catch (e) {
-      pError = (e as Error).message;
-    }
+    }, (m) => (pError = m));
   }
 
   load();
