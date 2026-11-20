@@ -139,6 +139,12 @@ self.onmessage = (ev: MessageEvent<Request>) => {
       msg = { id, ok: false, error: e instanceof Error ? e.message : String(e) };
     }
     const transfer = msg.ok && msg.result instanceof Uint8Array ? [msg.result.buffer] : [];
-    (self as unknown as DedicatedWorkerGlobalScope).postMessage(msg, transfer);
-  });
+    const scope = self as unknown as DedicatedWorkerGlobalScope;
+    try {
+      scope.postMessage(msg, transfer);
+    } catch (e) {
+      // e.g. a result the browser can't copy across threads: still answer, so the caller doesn't hang.
+      scope.postMessage({ id, ok: false, error: `Could not send the result: ${e instanceof Error ? e.message : String(e)}` });
+    }
+  }).catch((e) => console.error('Worker queue error', e)); // a rejected link would skip every later request
 };
