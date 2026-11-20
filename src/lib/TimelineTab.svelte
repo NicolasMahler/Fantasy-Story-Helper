@@ -128,14 +128,14 @@
 {/if}
 
 <style>
-  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--border); border-radius: 999px; padding: 2px; margin-bottom: 10px; }
-  .seg button { border: none; background: none; border-radius: 999px; min-height: 34px; padding: 0.3rem 0.9rem; font-size: 0.85rem; color: var(--muted); }
-  .seg button[aria-selected='true'] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
-  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .chip { border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 34px; font-size: 0.82rem; color: var(--muted); }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; border-radius: 999px; padding: 5px; margin-bottom: 14px; box-shadow: var(--pressed); }
+  .seg button { border: none; background: none; box-shadow: none; border-radius: 999px; min-height: 34px; padding: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); }
+  .seg button[aria-selected='true'] { background: var(--accent); color: var(--accent-text); font-weight: 600; box-shadow: var(--raised-sm); }
+  .filters { display: flex; flex-wrap: wrap; gap: 12px 10px; margin-bottom: 14px; }
+  .chip { border-radius: 999px; padding: 0.25rem 0.9rem; min-height: 36px; font-size: 0.82rem; color: var(--muted); }
   .chip.set { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 15%, transparent); }
   .chip[aria-pressed='true'] { border-color: var(--accent); color: var(--text); }
-  .chip-select { border-radius: 999px; min-height: 34px; padding: 0.2rem 0.6rem; font-size: 0.82rem; color: var(--muted); width: 6.5rem; }
+  .chip-select { border-radius: 999px; min-height: 36px; padding: 0.2rem 0.6rem; font-size: 0.82rem; color: var(--muted); width: 6.5rem; }
   .adder { display: flex; margin-bottom: 12px; max-width: 420px; }
   .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.75rem; color: var(--muted); margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--border); }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-right: 5px; vertical-align: -1px; }
