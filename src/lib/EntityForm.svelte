@@ -28,6 +28,7 @@
       firstBookId: entity?.first_book_id ?? null,
       description: entity?.description ?? '',
       attributes: { ...(entity?.attributes ?? {}) } as Attributes,
+      aliases: (entity?.aliases ?? []).join(', '),
     };
   }
   const start = initial();
@@ -39,6 +40,8 @@
   let firstBookId = $state<number | null>(start.firstBookId);
   let description = $state(start.description);
   let attributes = $state<Attributes>(start.attributes);
+  /** Other names, comma-separated in the form. */
+  let aliasText = $state(start.aliases);
   let busy = $state(false);
   let error = $state<string | null>(null);
 
@@ -69,12 +72,13 @@
     // Keep values for fields of other types only if the type didn't change.
     const keepOther = entity && entity.type.id === typeId ? entity.attributes : {};
     const merged = { ...keepOther, ...attrs };
+    const aliases = aliasText.split(',');
     try {
       if (entity) {
-        await rpc('updateEntity', entity.id, { name, typeId, firstBookId, description, attributes: merged });
+        await rpc('updateEntity', entity.id, { name, typeId, firstBookId, description, attributes: merged, aliases });
         onsaved(entity.id);
       } else {
-        onsaved(await rpc('createEntity', { seriesId, typeId, name, description, firstBookId, attributes: merged }));
+        onsaved(await rpc('createEntity', { seriesId, typeId, name, description, firstBookId, attributes: merged, aliases }));
       }
     } catch (e) {
       error = (e as Error).message;
@@ -86,6 +90,9 @@
 
 <form class="stack" onsubmit={save}>
   <label>Name <input bind:value={name} required /></label>
+  <label>Also known as
+    <input bind:value={aliasText} placeholder="Other names, separated by commas" autocomplete="off" />
+  </label>
   <div class="row">
     <label class="grow">Type
       <select bind:value={typeId}>

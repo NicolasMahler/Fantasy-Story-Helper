@@ -74,7 +74,9 @@
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => pick(r)}>
-            <Icon name={r.icon} size={15} color={r.color} /> {r.name} <small class="muted">{r.type_name}</small>
+            <Icon name={r.icon} size={15} color={r.color} /> {r.name}
+            {#if r.alias}<small class="aka">aka {r.alias}</small>{/if}
+            <small class="muted">{r.type_name}</small>
           </button>
         </li>
       {:else}

@@ -16,13 +16,17 @@ export const LINE_ICONS_SQL = [
   .map(([key, emoji, icon]) => `UPDATE entity_type SET icon = '${icon}' WHERE key = '${key}' AND icon = '${emoji}';`)
   .join('\n');
 
+/** v4: other names an entry goes by ("Surly" for Laseen), as a JSON array of strings. */
+const aliases = `ALTER TABLE entity ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(aliases));`;
+
 /**
  * Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one.
  *   v1: schema.sql (initial schema)
  *   v2: app_meta
  *   v3: line icons for built-in types
+ *   v4: entity.aliases
  */
-export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL];
+export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL, aliases];
 
 export function currentVersion(db: SqlDb): number {
   return db.query<{ user_version: number }>('PRAGMA user_version')[0].user_version;

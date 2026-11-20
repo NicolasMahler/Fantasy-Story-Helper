@@ -140,3 +140,55 @@ describe('listEntities / searchEntities', () => {
     expect(searchEntities(db, seriesId, null, '%')).toEqual([]);
   });
 });
+
+describe('aliases', () => {
+  let laseen: number;
+  beforeEach(() => {
+    laseen = createEntity(db, {
+      seriesId, typeId: typeId('character'), name: 'Laseen', aliases: [' Surly ', '', 'surly', 'Laseen', 'The   Empress'],
+    });
+  });
+
+  it('are cleaned of blanks, repeats and the entry\'s own name', () => {
+    expect(getEntity(db, laseen)!.aliases).toEqual(['Surly', 'The Empress']);
+    updateEntity(db, laseen, { aliases: ['Surly', 'Mistress of the Claw'] });
+    expect(getEntity(db, laseen)!.aliases).toEqual(['Surly', 'Mistress of the Claw']);
+    // Renaming to one of its other names drops that one from the list.
+    updateEntity(db, laseen, { name: 'Surly' });
+    expect(getEntity(db, laseen)!.aliases).toEqual(['Mistress of the Claw']);
+  });
+
+  it('default to none', () => {
+    const id = createEntity(db, { seriesId, typeId: typeId('character'), name: 'Kalam' });
+    expect(getEntity(db, id)!.aliases).toEqual([]);
+  });
+
+  it('are found by the entries search and @ autocomplete, saying which name matched', () => {
+    createEntity(db, { seriesId, typeId: typeId('character'), name: 'Surlyn' });
+    expect(listEntities(db, seriesId, { search: 'surly' }).map((e) => [e.name, e.alias])).toEqual([
+      ['Surlyn', undefined], ['Laseen', 'Surly'],
+    ]);
+    expect(searchEntities(db, seriesId, null, 'surly').map((e) => [e.name, e.alias])).toEqual([
+      ['Surlyn', undefined], ['Laseen', 'Surly'],
+    ]);
+  });
+
+  it('do not match on the JSON punctuation they are stored with', () => {
+    expect(searchEntities(db, seriesId, null, '","')).toEqual([]);
+    expect(listEntities(db, seriesId, { search: '["' })).toEqual([]);
+  });
+});
+
+describe('listEntities: description matches', () => {
+  it('finds entries by description text, after name matches, with an excerpt', () => {
+    const kalam = createEntity(db, { seriesId, typeId: typeId('character'), name: 'Kalam', description: 'Once of the Claw.' });
+    createEntity(db, { seriesId, typeId: typeId('faction'), name: 'Claw' });
+    createEntity(db, { seriesId, typeId: typeId('character'), name: 'Quick Ben', description: `Partner of @[Kalam](${kalam}).` });
+    expect(listEntities(db, seriesId, { search: 'claw' }).map((e) => [e.name, e.snippet])).toEqual([
+      ['Claw', undefined], ['Kalam', 'Once of the Claw.'],
+    ]);
+    // Link markup is not searched: "(1" or "@[" only appear in the stored text, not the shown text.
+    expect(listEntities(db, seriesId, { search: '@[' })).toEqual([]);
+    expect(listEntities(db, seriesId, { search: 'partner' }).map((e) => e.snippet)).toEqual(['Partner of Kalam.']);
+  });
+});

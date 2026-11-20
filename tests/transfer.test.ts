@@ -52,6 +52,16 @@ describe('validateDump', () => {
 });
 
 describe('importJson: older exports', () => {
+  it('imports entries from a pre-v4 export with no other names', () => {
+    const { db, seriesId, typeId } = setup();
+    createEntity(db, { seriesId, typeId: typeId('character'), name: 'Hero', aliases: ['The Bold'] });
+    const dump = JSON.parse(JSON.stringify(dumpJson(db)));
+    dump.schemaVersion = 3;
+    for (const row of dump.tables.entity) delete row.aliases;
+    importJson(db, dump, 'replace');
+    expect(getEntity(db, byName(db, 'Hero'))!.aliases).toEqual([]);
+  });
+
   it('gives untouched built-in types from a pre-v3 export the line icons', () => {
     const { db } = setup();
     const dump = JSON.parse(JSON.stringify(dumpJson(db)));

@@ -89,6 +89,14 @@ describe('search', () => {
     expect(search(db, { seriesId, q: 'partners' }).map((r) => r.name)).toEqual(['Quick Ben']);
   });
 
+  it('finds other names (aliases) right after names, marking the alias', () => {
+    createEntity(db, { seriesId, typeId: typeId('character'), name: 'Laseen', aliases: ['Surly'], description: 'Empress.' });
+    createEntity(db, { seriesId, typeId: typeId('lore'), name: 'Old Guard', description: 'Laseen, once called Surly, distrusts them.' });
+    const r = search(db, { seriesId, q: 'surly' });
+    expect(r.map((x) => `${x.name}:${x.field}`)).toEqual(['Laseen:also known as', 'Old Guard:description']);
+    expect(r[0].snippet).toEqual({ text: 'Also known as Surly', start: 14, length: 5 });
+  });
+
   it('ignores blank queries and treats wildcards literally', () => {
     expect(search(db, { seriesId, q: '  ' })).toEqual([]);
     expect(search(db, { seriesId, q: '%' })).toEqual([]);

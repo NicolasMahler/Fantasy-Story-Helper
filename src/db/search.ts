@@ -64,14 +64,15 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
   }
 
   const entities = db.query<{
-    id: number; series_id: number; name: string; description: string; attributes: string;
+    id: number; series_id: number; name: string; aliases: string; description: string; attributes: string;
     icon: string; color: string; type_name: string; field_schema: string;
   }>(
-    `SELECT e.id, e.series_id, e.name, e.description, e.attributes, t.icon, t.color, t.name AS type_name, t.field_schema
+    `SELECT e.id, e.series_id, e.name, e.aliases, e.description, e.attributes, t.icon, t.color, t.name AS type_name, t.field_schema
      FROM entity e JOIN entity_type t ON t.id = e.type_id
-     WHERE ${scope} AND (e.name LIKE ? ESCAPE '\\' OR e.description LIKE ? ESCAPE '\\' OR e.attributes LIKE ? ESCAPE '\\'
+     WHERE ${scope} AND (e.name LIKE ? ESCAPE '\\' OR e.aliases LIKE ? ESCAPE '\\' OR e.description LIKE ? ESCAPE '\\'
+       OR e.attributes LIKE ? ESCAPE '\\'
        OR e.id IN (SELECT from_entity_id FROM entity_link WHERE kind LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\'))`,
-    [...scopeParams, like, like, like, like, like],
+    [...scopeParams, like, like, like, like, like, like],
   );
   // First matching relationship per entity, fetched in one query rather than one per entity.
   const linkHits = new Map<number, { kind: string; note: string; other: string }>();
@@ -87,6 +88,16 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
     const name = e.name.toLowerCase();
     if (name.includes(ql)) {
       ranked.push({ rank: name.startsWith(ql) ? 0 : 1, r: { ...base, field: 'name', snippet: null } });
+      continue;
+    }
+    const alias = (JSON.parse(e.aliases) as string[]).find((a) => a.toLowerCase().includes(ql));
+    if (alias) {
+      const text = `Also known as ${alias}`;
+      const at = text.toLowerCase().indexOf(ql, 'Also known as '.length);
+      ranked.push({
+        rank: alias.toLowerCase().startsWith(ql) ? 0 : 1,
+        r: { ...base, field: 'also known as', snippet: { text, start: at, length: q.length } },
+      });
       continue;
     }
     if (stripMentions(e.description).toLowerCase().includes(ql)) {
