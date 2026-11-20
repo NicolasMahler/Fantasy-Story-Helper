@@ -28,7 +28,8 @@
 
   const typeByKey = $derived(new Map(types.map((t) => [t.key, t])));
   const canCreate = $derived(
-    !!query?.term.trim() && !results.some((r) => r.name.toLowerCase() === query!.term.trim().toLowerCase()),
+    !!query?.term.trim()
+      && !results.some((r) => [r.name, r.alias].some((n) => n?.toLowerCase() === query!.term.trim().toLowerCase())),
   );
   const optionCount = $derived(results.length + (canCreate ? 1 : 0));
   const open = $derived(!!query && optionCount > 0);
@@ -138,7 +139,9 @@
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => choose(i)}>
-            <Icon name={r.icon} size={15} color={r.color} /> {r.name} <small class="muted">{r.type_name}</small>
+            <Icon name={r.icon} size={15} color={r.color} /> {r.name}
+            {#if r.alias}<small class="aka">aka {r.alias}</small>{/if}
+            <small class="muted">{r.type_name}</small>
           </button>
         </li>
       {/each}

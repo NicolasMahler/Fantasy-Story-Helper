@@ -63,7 +63,7 @@
   }
 
   const fieldLabel = (r: SearchResult) =>
-    r.field === 'name' || r.field === 'title' ? r.typeName : `${r.typeName} · ${r.field}`;
+    r.field === 'name' || r.field === 'title' || r.field === 'also known as' ? r.typeName : `${r.typeName} · ${r.field}`;
 </script>
 
 {#if open}
@@ -109,7 +109,7 @@
         {/each}
       </ul>
     {:else}
-      <p class="muted empty">Names, descriptions, fields, relationships, books and ages. ↑ ↓ to move, Enter to open.</p>
+      <p class="muted empty">Names, other names, descriptions, fields, relationships, books and ages. ↑ ↓ to move, Enter to open.</p>
     {/if}
   </div>
 {/if}
