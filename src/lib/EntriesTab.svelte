@@ -108,7 +108,6 @@
   .dot { width: 4px; align-self: stretch; border-radius: 2px; }
   .name { flex: 1; min-width: 0; font-weight: 500; }
   .aka { font-weight: 400; margin-left: 0.25rem; }
-  /* The excerpt wraps under the name; long words break rather than widen the page. */
   .sub { margin-top: -0.1rem; }
   .sub .chip, .tstatus { display: inline-flex; align-items: center; gap: 0.35rem; }
   .tstatus { display: flex; width: fit-content; font-weight: 600; margin-top: 0.1rem; }
@@ -122,5 +121,6 @@
   /* On a highlighted chip the accent fill would hide the open ring, so dots take the chip's text colour. */
   .chip[aria-pressed='true'] .sdot.s-open { border-color: currentColor; }
   .chip[aria-pressed='true'] .sdot:not(.s-open) { box-shadow: 0 0 0 1.5px currentColor; }
+  /* The excerpt wraps under the name; long words break rather than widen the page. */
   .why { display: block; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; margin-top: 0.1rem; }
 </style>
