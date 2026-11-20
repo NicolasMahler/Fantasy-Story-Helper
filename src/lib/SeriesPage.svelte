@@ -10,7 +10,7 @@
   import GraphTab from './GraphTab.svelte';
   import { slideIndicator } from './motion';
 
-  let { seriesId, tab }: { seriesId: number; tab: SeriesTab } = $props();
+  let { seriesId, tab, focus }: { seriesId: number; tab: SeriesTab; focus?: number } = $props();
 
   let series = $state<SeriesRow | null | undefined>(undefined);
 
@@ -51,7 +51,7 @@
       {:else if tab === 'books'}
         <BooksTab {seriesId} onchange={load} />
       {:else if tab === 'timeline'}
-        <TimelineTab {seriesId} />
+        {#key focus}<TimelineTab {seriesId} {focus} />{/key}
       {:else if tab === 'graph'}
         <GraphTab {seriesId} />
       {:else if tab === 'calendar'}

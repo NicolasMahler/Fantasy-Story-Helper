@@ -42,6 +42,11 @@
   <a class="back" href={href({ name: 'series', seriesId, tab: 'entries' })}>← Entries</a>
   {#if entity && !editing}
     <div class="actions">
+      {#if entity.type.key === 'event'}
+        <a class="button small" href={href({ name: 'series', seriesId, tab: 'timeline', focus: entityId })} title="Show this event on the timeline">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M12 7h6M6 12h6M12 17h5" /><circle cx="12" cy="7" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="17" r="1.5" /></svg>Timeline
+        </a>
+      {/if}
       <button class="small" onclick={() => (editing = true)}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4M13.5 6.5l4 4" /></svg>Edit
       </button>

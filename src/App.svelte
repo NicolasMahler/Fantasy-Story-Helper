@@ -87,7 +87,7 @@
   {:else if route.name === 'settings'}
     <Settings bind:info />
   {:else if route.name === 'series'}
-    {#key route.seriesId}<SeriesPage seriesId={route.seriesId} tab={route.tab} />{/key}
+    {#key route.seriesId}<SeriesPage seriesId={route.seriesId} tab={route.tab} focus={route.focus} />{/key}
   {:else if route.name === 'entity'}
     {#key route.entityId}<EntityPage seriesId={route.seriesId} entityId={route.entityId} />{/key}
   {:else if route.name === 'newEntity'}

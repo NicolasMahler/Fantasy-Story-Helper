@@ -9,7 +9,21 @@
     open,
     ontoggle,
     showBook = true,
-  }: { event: TimelineEvent; seriesId: number; open: boolean; ontoggle: () => void; showBook?: boolean } = $props();
+    focused = false,
+  }: {
+    event: TimelineEvent; seriesId: number; open: boolean; ontoggle: () => void; showBook?: boolean;
+    /** Arrived here from this event's page: scroll it into view and highlight it briefly. */
+    focused?: boolean;
+  } = $props();
+
+  function reveal(node: HTMLElement, on: boolean) {
+    if (!on) return;
+    // Wait a frame so the timeline (and the open card) are laid out before scrolling.
+    requestAnimationFrame(() => {
+      const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      node.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+    });
+  }
 
   const recounted = $derived(event.mode === 'recounted');
   const sub = $derived(
@@ -22,7 +36,7 @@
   );
 </script>
 
-<div class="ev" class:rec={recounted}>
+<div class="ev" class:rec={recounted} class:focused use:reveal={focused}>
   <button class="name" aria-expanded={open} onclick={ontoggle}>{event.name}</button>
   {#if sub}<small>{sub}</small>{/if}
   {#if open}
@@ -44,7 +58,16 @@
 </div>
 
 <style>
-  .ev { padding: 3px 0 6px 4px; min-width: 0; }
+  .ev { padding: 3px 0 6px 4px; min-width: 0; border-radius: 8px; }
+  /* The event you came from glows briefly, then settles. */
+  .focused { animation: focus-glow 2.4s var(--ease) both; }
+  @keyframes focus-glow {
+    0%, 35% { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+    100% { background: transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .focused { animation: none; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  }
   .name {
     all: unset; cursor: pointer; font-weight: 550; font-size: 0.95rem; overflow-wrap: anywhere;
     border-radius: 4px;

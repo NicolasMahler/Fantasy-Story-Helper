@@ -11,7 +11,8 @@
   import TimelineChart from './TimelineChart.svelte';
   import { slideIndicator } from './motion';
 
-  let { seriesId }: { seriesId: number } = $props();
+  /** `focus`: an event to scroll to and open (from an event's "Show on timeline"). */
+  let { seriesId, focus }: { seriesId: number; focus?: number } = $props();
 
   type View = 'story' | 'reading' | 'chart';
   const VIEW_KEY = 'fh.timelineView';
@@ -32,7 +33,11 @@
 
   let data = $state<TimelineData | null>(null);
   let types = $state<EntityTypeRow[]>([]);
-  let view = $state<View>(savedView());
+  // The chart has no list to scroll to, so a focused event opens in story order (without changing the saved view).
+  // (SeriesPage remounts this tab when `focus` changes, so reading it once is enough.)
+  const initialView = savedView();
+  // svelte-ignore state_referenced_locally
+  let view = $state<View>(focus !== undefined && initialView === 'chart' ? 'story' : initialView);
   let picked = $state<{ id: number; name: string; icon: string }[]>([]);
   let typeId = $state<number | null>(null);
   let bookId = $state<number | null>(null);
@@ -117,9 +122,9 @@
   {:else if filtered.length === 0}
     <p class="muted">No events match these filters.</p>
   {:else if view === 'story'}
-    <TimelineStory events={filtered} ages={data.ages} {seriesId} />
+    <TimelineStory events={filtered} ages={data.ages} {seriesId} {focus} />
   {:else if view === 'reading'}
-    <TimelineReading events={filtered} books={data.books} {seriesId} filtered={anyFilter} />
+    <TimelineReading events={filtered} books={data.books} {seriesId} filtered={anyFilter} {focus} />
   {:else}
     <TimelineChart events={filtered} books={data.books} {seriesId} />
   {/if}
