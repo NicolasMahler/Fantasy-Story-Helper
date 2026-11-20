@@ -11,6 +11,7 @@
   import type { GraphData } from '../db/graph';
   import { buildGraph, type ModelEdge, type ModelNode } from './graphModel';
   import { href } from './route';
+  import { reducedMotion } from './motion';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -23,7 +24,8 @@
   let showLinks = $state(true);
   let selected = $state<{ kind: 'node'; id: number } | { kind: 'edge'; key: string } | null>(null);
   let width = $state(700);
-  const height = $derived(width < 560 ? 420 : 540);
+  /** Fills the column; tall enough to spread out, short enough to leave the details panel in reach. */
+  const height = $derived(Math.round(Math.min(680, Math.max(420, width * 0.85))));
 
   let loadError = $state<string | null>(null);
 
@@ -180,6 +182,15 @@
     return { x: (p.x + q.x) / 2 - (dy / len) * off, y: (p.y + q.y) / 2 + (dx / len) * off - 3 };
   }
 
+  // The details panel sits under the graph. When a selection leaves its heading off-screen, scroll just
+  // enough to show the top of it, so part of the graph stays in view for the next tap.
+  let panelEl = $state<HTMLElement | null>(null);
+  $effect(() => {
+    if (!selected || !panelEl) return;
+    const top = panelEl.getBoundingClientRect().top;
+    if (top > innerHeight - 80) scrollBy({ top: top - innerHeight * 0.55, behavior: reducedMotion() ? 'auto' : 'smooth' });
+  });
+
   const toggleType = (id: number) =>
     (typeIds = typeIds.includes(id) ? typeIds.filter((t) => t !== id) : [...typeIds, id]);
 </script>
@@ -267,7 +278,12 @@
       {/if}
     </div>
 
-    <aside class="panel" aria-live="polite">
+    <div class="legend">
+      <span><i class="l1"></i>1 shared event</span><span><i class="l3"></i>more shared events</span>
+      <span><i class="lr"></i>Relationship you added</span><span>Bigger dot = more connections</span>
+    </div>
+
+    <aside class="panel" aria-live="polite" bind:this={panelEl}>
       {#if selectedEdge}
         {@const a = nodeById.get(selectedEdge.a)!}
         {@const b = nodeById.get(selectedEdge.b)!}
@@ -308,11 +324,6 @@
       {/if}
     </aside>
   </div>
-
-  <div class="legend">
-    <span><i class="l1"></i>1 shared event</span><span><i class="l3"></i>more shared events</span>
-    <span><i class="lr"></i>Relationship you added</span><span>Bigger dot = more connections</span>
-  </div>
 {:else}
   <p class="muted">{loadError ?? 'Loading graph…'}</p>
 {/if}
@@ -329,8 +340,8 @@
   .check { display: flex !important; align-items: center; gap: 6px; }
   .check input { width: auto; }
 
-  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 12px; }
-  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+  /* Graph spans the column; legend and details stack underneath. */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .canvas {
     position: relative; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-height: 200px;
     background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 8%, var(--surface)), var(--bg) 75%);
@@ -359,8 +370,8 @@
   .zoom button { min-height: 32px; width: 34px; padding: 0; background: var(--surface); }
 
   .panel {
-    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px;
-    font-size: 0.88rem; align-self: start; display: grid; gap: 8px;
+    border-radius: calc(var(--radius) + 2px); background: var(--surface); box-shadow: var(--raised); padding: 12px 14px;
+    font-size: 0.88rem; display: grid; gap: 8px;
   }
   .panel h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
   .sub { color: var(--muted); font-size: 0.82rem; margin: 0; }
@@ -373,7 +384,7 @@
   .linkish { all: unset; cursor: pointer; color: var(--accent); }
   .linkish:focus-visible { outline: 2px solid var(--accent); }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.75rem; color: var(--muted); margin-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.75rem; color: var(--muted); }
   .legend i { display: inline-block; vertical-align: 3px; margin-right: 5px; width: 22px; }
   .l1 { border-top: 1.5px solid var(--muted); }
   .l3 { border-top: 5px solid var(--muted); }
