@@ -8,6 +8,7 @@
   import { attempt } from './forms';
   import { slugify } from './text';
   import { theme, setTheme, type ThemePref } from './theme.svelte';
+  import { href } from './route';
 
   const themeOptions: { value: ThemePref; label: string; hint?: string }[] = [
     { value: 'system', label: 'System', hint: 'match this device’s light or dark setting' },
@@ -100,6 +101,26 @@
     }
   }
 
+  const SAMPLE_NAME = 'Malazan Book of the Fallen';
+  const sampleSeries = $derived(series.find((s) => s.name === SAMPLE_NAME));
+  let addingSample = $state(false);
+
+  async function addSample() {
+    addingSample = true;
+    status = null;
+    try {
+      // Loaded on demand so the sample's text stays out of the main bundle.
+      const { loadMalazanSample } = await import('../samples/malazanBook1');
+      const id = await loadMalazanSample();
+      location.hash = href({ name: 'series', seriesId: id, tab: 'entries' });
+    } catch (e) {
+      status = `Couldn't add the sample. ${(e as Error).message}`;
+      await refresh();
+    } finally {
+      addingSample = false;
+    }
+  }
+
   refresh();
 </script>
 
@@ -180,6 +201,21 @@
   <h3>From a database file</h3>
   <p class="muted small">Replaces everything with a previously exported <code>.sqlite</code> file.</p>
   <input bind:this={sqliteInput} type="file" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3,application/x-sqlite3" onchange={importSqlite} disabled={info.storage !== 'opfs'} aria-label="Import database file" />
+</section>
+
+<section class="card">
+  <h2>Sample series</h2>
+  <p class="muted">
+    <strong>Malazan Book of the Fallen, Book 1</strong> (Gardens of the Moon): about 100 entries, events on the timeline
+    and relationships, with nothing from later books.
+  </p>
+  {#if sampleSeries}
+    <p class="small">Already in your library. <a href={href({ name: 'series', seriesId: sampleSeries.id, tab: 'entries' })}>Open it</a>.</p>
+  {:else}
+    <button class="primary" onclick={addSample} disabled={addingSample}>
+      {addingSample ? 'Adding…' : 'Add the Malazan Book 1 sample'}
+    </button>
+  {/if}
 </section>
 
 {#if status}<p role="status" class="status">{status}</p>{/if}

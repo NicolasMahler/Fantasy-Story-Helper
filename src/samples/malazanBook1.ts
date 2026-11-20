@@ -1,7 +1,8 @@
 import { rpc } from '../db/client';
 
 /**
- * Dev-only sample data: a small slice of Malazan Book of the Fallen, Book 1 (Gardens of the Moon) ONLY.
+ * Sample series: Malazan Book of the Fallen, Book 1 (Gardens of the Moon) ONLY. Added from Settings
+ * ("Add the Malazan Book 1 sample"), or in dev with `await loadMalazanSample()` in the console.
  * Keep every entry and event within Book 1.
  * Descriptions write links as {{Entry name}}; they are turned into real @-links once every entry exists.
  */
@@ -315,15 +316,28 @@ const LINKS: [from: string, kind: string, to: string, note?: string][] = [
   ['Adjunct Lorn', 'seeks', 'Finnest'],
 ];
 
-/** Creates the sample series. Refuses to run if a series with the same name already exists. Returns the series id. */
+/**
+ * Creates the sample series. Refuses to run if a series with the same name already exists. Returns the series id.
+ * If anything fails partway, the half-built series is removed again.
+ */
 export async function loadMalazanSample(): Promise<number> {
   if ((await rpc('listSeries')).some((s) => s.name === SERIES)) {
-    throw new Error(`"${SERIES}" already exists — delete it first to reload the sample.`);
+    throw new Error(`“${SERIES}” is already in your library. Delete it first to add the sample again.`);
   }
   const seriesId = await rpc('createSeries', {
     name: SERIES,
     description: 'Sample data from Book 1, Gardens of the Moon.',
   });
+  try {
+    await fill(seriesId);
+  } catch (e) {
+    await rpc('deleteSeries', seriesId).catch(() => { /* keep the original error */ });
+    throw e;
+  }
+  return seriesId;
+}
+
+async function fill(seriesId: number): Promise<void> {
   const bookIds: number[] = [];
   for (const title of BOOKS) bookIds.push(await rpc('addBook', seriesId, title));
   const book = (n = 1) => bookIds[n - 1];
@@ -377,5 +391,4 @@ export async function loadMalazanSample(): Promise<number> {
   for (const [from, kind, to, note] of LINKS) {
     await rpc('createLink', { fromId: id(from), toId: id(to), kind, note });
   }
-  return seriesId;
 }

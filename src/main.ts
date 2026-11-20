@@ -10,7 +10,7 @@ if (import.meta.env.DEV) {
   const w = window as unknown as Record<string, unknown>;
   w.db = db;
   // Run `await loadMalazanSample()` in the console to add a sample series.
-  w.loadMalazanSample = () => import('./dev/malazanSample').then((m) => m.loadMalazanSample());
+  w.loadMalazanSample = () => import('./samples/malazanBook1').then((m) => m.loadMalazanSample());
 }
 
 export default mount(App, { target: document.getElementById('app')! });
