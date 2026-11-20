@@ -10,6 +10,7 @@ describe('parseRoute', () => {
     expect(parseRoute('#/s/4/books')).toEqual({ name: 'series', seriesId: 4, tab: 'books' });
     expect(parseRoute('#/s/4/types')).toEqual({ name: 'series', seriesId: 4, tab: 'types' });
     expect(parseRoute('#/s/4/timeline')).toEqual({ name: 'series', seriesId: 4, tab: 'timeline' });
+    expect(parseRoute('#/s/4/timeline/e/9')).toEqual({ name: 'series', seriesId: 4, tab: 'timeline', focus: 9 });
     expect(parseRoute('#/s/4/graph')).toEqual({ name: 'series', seriesId: 4, tab: 'graph' });
     expect(parseRoute('#/s/4/calendar')).toEqual({ name: 'series', seriesId: 4, tab: 'calendar' });
     expect(parseRoute('#/s/4/e/9')).toEqual({ name: 'entity', seriesId: 4, entityId: 9 });
@@ -26,6 +27,7 @@ describe('parseRoute', () => {
     for (const r of [
       { name: 'library' }, { name: 'settings' },
       { name: 'series', seriesId: 2, tab: 'books' },
+      { name: 'series', seriesId: 2, tab: 'timeline', focus: 8 },
       { name: 'entity', seriesId: 2, entityId: 5 },
       { name: 'newEntity', seriesId: 2, typeId: 3 },
     ] as const) {

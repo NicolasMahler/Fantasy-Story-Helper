@@ -4,8 +4,10 @@
   import { storyLayout } from './timelineLayout';
   import TimelineEventView from './TimelineEvent.svelte';
 
-  let { events, ages, seriesId }: { events: TimelineEvent[]; ages: AgeInfo[]; seriesId: number } = $props();
-  let openId = $state<number | null>(null);
+  let { events, ages, seriesId, focus }: { events: TimelineEvent[]; ages: AgeInfo[]; seriesId: number; focus?: number } = $props();
+  // Starts with the focused event open; after that the reader opens and closes events freely.
+  // svelte-ignore state_referenced_locally
+  let openId = $state<number | null>(focus ?? null);
 
   const layout = $derived(storyLayout(events, ages));
   const toggle = (id: number) => (openId = openId === id ? null : id);
@@ -20,7 +22,7 @@
           <div class="row">
             <div class="when">{row.when ?? ''}</div>
             <div class="spine"><span class="dot" class:hollow={row.event.mode === 'recounted'}></span></div>
-            <TimelineEventView event={row.event} {seriesId} open={openId === row.event.id} ontoggle={() => toggle(row.event.id)} />
+            <TimelineEventView event={row.event} {seriesId} open={openId === row.event.id} focused={focus === row.event.id} ontoggle={() => toggle(row.event.id)} />
           </div>
         {:else}
           <div class="gap" style:height={`${row.size}px`}>
@@ -39,7 +41,7 @@
         <div class="row">
           <div class="when">·</div>
           <div class="spine"><span class="dot" class:hollow={e.mode === 'recounted'}></span></div>
-          <TimelineEventView event={e} {seriesId} open={openId === e.id} ontoggle={() => toggle(e.id)} />
+          <TimelineEventView event={e} {seriesId} open={openId === e.id} focused={focus === e.id} ontoggle={() => toggle(e.id)} />
         </div>
       {/each}
     </div>

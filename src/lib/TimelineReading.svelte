@@ -4,9 +4,11 @@
   import TimelineEventView from './TimelineEvent.svelte';
 
   let {
-    events, books, seriesId, filtered,
-  }: { events: TimelineEvent[]; books: TimelineBook[]; seriesId: number; filtered: boolean } = $props();
-  let openId = $state<number | null>(null);
+    events, books, seriesId, filtered, focus,
+  }: { events: TimelineEvent[]; books: TimelineBook[]; seriesId: number; filtered: boolean; focus?: number } = $props();
+  // Starts with the focused event open; after that the reader opens and closes events freely.
+  // svelte-ignore state_referenced_locally
+  let openId = $state<number | null>(focus ?? null);
 
   const sections = $derived(readingLayout(events, books));
 </script>
@@ -21,7 +23,7 @@
       <div class="row">
         <div class="when">{e.short}</div>
         <div class="spine" class:age={e.laneAgeId !== null}><span class="dot" class:hollow={e.mode === 'recounted'}></span></div>
-        <TimelineEventView event={e} {seriesId} showBook={false} open={openId === e.id} ontoggle={() => (openId = openId === e.id ? null : e.id)} />
+        <TimelineEventView event={e} {seriesId} showBook={false} open={openId === e.id} focused={focus === e.id} ontoggle={() => (openId = openId === e.id ? null : e.id)} />
       </div>
     {/each}
   </section>
