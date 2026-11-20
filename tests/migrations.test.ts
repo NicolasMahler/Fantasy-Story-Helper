@@ -16,7 +16,7 @@ describe('migrate', () => {
     expect(migrate(db)).toBe(MIGRATIONS.length);
     expect(objects(db, 'table')).toEqual([
       'age', 'app_meta', 'book', 'bucket_default', 'entity', 'entity_link', 'entity_type',
-      'event', 'event_participant', 'mention', 'series',
+      'event', 'event_participant', 'mention', 'series', 'theory',
     ]);
     expect(objects(db, 'view')).toEqual(['v_cooccurrence', 'v_timeline']);
   });
@@ -42,11 +42,27 @@ describe('migrate', () => {
     db.exec(`INSERT INTO entity_type (series_id, key, name, icon) VALUES
       (1, 'character', 'Character', '👤'), (1, 'faction', 'Faction', '🛡️'),
       (1, 'creature', 'Creature', '🦄'), (1, 'ship', 'Ship', '⛵')`);
-    migrate(db);
+    migrate(db, MIGRATIONS.slice(0, 3));
     const icons = Object.fromEntries(
       db.query<{ key: string; icon: string }>('SELECT key, icon FROM entity_type').map((r) => [r.key, r.icon]),
     );
     expect(icons).toEqual({ character: 'user', faction: 'shield', creature: '🦄', ship: '⛵' });
+  });
+
+  it('v5 gives existing series the built-in Theory type and adopts a custom one', () => {
+    const db = openNodeDb();
+    migrate(db, MIGRATIONS.slice(0, 4));
+    db.exec(`INSERT INTO series (id, name) VALUES (1, 'Plain'), (2, 'Has theories')`);
+    db.exec(`INSERT INTO entity_type (id, series_id, key, name, sort_order) VALUES
+      (1, 1, 'character', 'Character', 0), (2, 1, 'lore', 'Lore', 4), (3, 2, 'theory', 'Guesses', 0)`);
+    db.exec(`INSERT INTO entity (id, series_id, type_id, name) VALUES (1, 2, 3, 'The butler did it')`);
+    migrate(db);
+    const types = db.query('SELECT series_id, key, name, is_builtin, sort_order FROM entity_type WHERE key = ? ORDER BY series_id', ['theory']);
+    expect(types).toEqual([
+      { series_id: 1, key: 'theory', name: 'Theory', is_builtin: 1, sort_order: 5 },
+      { series_id: 2, key: 'theory', name: 'Guesses', is_builtin: 1, sort_order: 0 },
+    ]);
+    expect(db.query('SELECT entity_id, kind, status FROM theory')).toEqual([{ entity_id: 1, kind: 'theory', status: 'open' }]);
   });
 
   it('refuses a db from a newer app version', () => {

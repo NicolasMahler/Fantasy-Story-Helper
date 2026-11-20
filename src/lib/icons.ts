@@ -5,7 +5,7 @@
 const files = import.meta.glob(
   [
     // Built-in types
-    '/node_modules/@tabler/icons/icons/outline/{user,users-group,building-castle,swords,shield,diamond,wand,paw,flame,script}.svg',
+    '/node_modules/@tabler/icons/icons/outline/{user,users-group,building-castle,swords,shield,diamond,wand,paw,flame,script,bulb}.svg',
     // App icons (search results, header)
     '/node_modules/@tabler/icons/icons/outline/{books,book,hourglass,search}.svg',
     // More choices for custom types

@@ -48,6 +48,7 @@ describe('entity types', () => {
 
   it('refuses to delete the builtin event type or a type in use', () => {
     expect(() => deleteType(db, typeId('event'))).toThrow(/built-in/i);
+    expect(() => deleteType(db, typeId('theory'))).toThrow(/built-in/i);
     createEntity(db, { seriesId, typeId: typeId('item'), name: 'Sword' });
     expect(() => deleteType(db, typeId('item'))).toThrow(/in use/i);
     deleteType(db, typeId('lore'));

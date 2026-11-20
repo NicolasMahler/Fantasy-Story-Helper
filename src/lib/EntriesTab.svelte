@@ -5,6 +5,7 @@
   import type { EntityTypeRow } from '../db/entityTypes';
   import { href } from './route';
   import { rise } from './motion';
+  import { STATUS_LABELS, type TheoryStatus } from '../db/theories';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -12,6 +13,11 @@
   let entries = $state<EntityListItem[]>([]);
   let typeId = $state<number | null>(null);
   let search = $state('');
+  /** Only offered while the Theory type is picked. */
+  let theoryStatus = $state<TheoryStatus | null>(null);
+  const theoryType = $derived(types.find((t) => t.key === 'theory'));
+  const showingTheories = $derived(theoryType !== undefined && typeId === theoryType.id);
+  const THEORY_FILTERS: TheoryStatus[] = ['open', 'confirmed', 'wrong', 'answered'];
   let loaded = $state(false);
 
   $effect(() => {
@@ -19,7 +25,7 @@
   });
 
   $effect(() => {
-    const filter = { typeId, search };
+    const filter = { typeId, search, theoryStatus: showingTheories ? theoryStatus : null };
     rpc('listEntities', seriesId, filter).then((e) => {
       entries = e;
       loaded = true;
@@ -41,6 +47,17 @@
   {/each}
 </div>
 
+{#if showingTheories}
+  <div class="chips sub" role="group" aria-label="Filter theories by status">
+    <button class="chip" aria-pressed={theoryStatus === null} onclick={() => (theoryStatus = null)}>Any status</button>
+    {#each THEORY_FILTERS as s (s)}
+      <button class="chip" aria-pressed={theoryStatus === s} onclick={() => (theoryStatus = theoryStatus === s ? null : s)}>
+        <span class="sdot s-{s}" aria-hidden="true"></span>{STATUS_LABELS[s]}
+      </button>
+    {/each}
+  </div>
+{/if}
+
 {#if loaded && entries.length === 0}
   <p class="muted">
     {search || typeId ? 'No entries match.' : 'No entries yet. Create one, or type @ in any description to create entries as you go.'}
@@ -56,6 +73,11 @@
             {e.name}
             {#if e.alias}<small class="aka">aka {e.alias}</small>{/if}
             {#if e.snippet}<small class="why">{e.snippet}</small>{/if}
+            {#if e.theory_status}
+              <small class="tstatus s-{e.theory_status}">
+                <span class="sdot s-{e.theory_status}" aria-hidden="true"></span>{e.theory_status === 'open' ? (e.theory_kind === 'question' ? 'Open question' : 'Open') : STATUS_LABELS[e.theory_status]}
+              </small>
+            {/if}
           </span>
           <small class="muted">{e.type_name}{e.first_book_number ? ` · Book ${e.first_book_number}` : ''}</small>
         </a>
@@ -75,6 +97,19 @@
   .dot { width: 4px; align-self: stretch; border-radius: 2px; }
   .name { flex: 1; min-width: 0; font-weight: 500; }
   .aka { font-weight: 400; margin-left: 0.25rem; }
+  .sub { margin-top: -0.1rem; }
+  .sub .chip, .tstatus { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .tstatus { display: flex; width: fit-content; font-weight: 600; margin-top: 0.1rem; }
+  .tstatus.s-open { color: var(--accent); }
+  .tstatus.s-confirmed, .tstatus.s-answered { color: var(--ok); }
+  .tstatus.s-wrong { color: var(--danger); }
+  .sdot { width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: none; }
+  .sdot.s-open { border: 2px solid var(--accent); }
+  .sdot.s-confirmed, .sdot.s-answered { background: var(--ok); }
+  .sdot.s-wrong { background: var(--danger); }
+  /* On a highlighted chip the accent fill would hide the open ring, so dots take the chip's text colour. */
+  .chip[aria-pressed='true'] .sdot.s-open { border-color: currentColor; }
+  .chip[aria-pressed='true'] .sdot:not(.s-open) { box-shadow: 0 0 0 1.5px currentColor; }
   /* The excerpt wraps under the name; long words break rather than widen the page. */
   .why { display: block; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; margin-top: 0.1rem; }
 </style>
