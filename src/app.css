@@ -1,17 +1,23 @@
 
 :root {
   --header-h: 52px;
-  --bg: #f7f4ee;
-  --surface: #ffffff;
-  --text: #221d2b;
-  --muted: #6b6475;
-  --border: #e2dcd2;
-  --accent: #5a3fa0;
+  /* Neumorphic: surfaces share the page color and are shaped by a light top-left and dark bottom-right shadow. */
+  --bg: #ece5da;
+  --surface: #ece5da;
+  --shade-dark: #cbc0b0;
+  --shade-light: #fffaf2;
+  --text: #2a2118;
+  --muted: #6f6252;
+  --border: #d9cebd;
+  --accent: #9a5c1a;
   --accent-text: #ffffff;
   --danger: #b3362f;
-  --warn-bg: #fff2cc;
-  --warn-text: #5c4300;
-  --radius: 10px;
+  --warn-bg: #eef2d9;
+  --warn-text: #4a5216;
+  --radius: 12px;
+  --raised: 5px 5px 10px var(--shade-dark), -5px -5px 10px var(--shade-light);
+  --raised-sm: 3px 3px 6px var(--shade-dark), -3px -3px 6px var(--shade-light);
+  --pressed: inset 2px 2px 5px var(--shade-dark), inset -2px -2px 5px var(--shade-light);
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -19,16 +25,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16121f;
-    --surface: #211b2d;
-    --text: #ece6f5;
-    --muted: #a399b3;
-    --border: #3a3149;
-    --accent: #a58cf0;
-    --accent-text: #16121f;
-    --danger: #f07a72;
-    --warn-bg: #3d3010;
-    --warn-text: #f5dc95;
+    --bg: #211b16;
+    --surface: #211b16;
+    --shade-dark: #15110d;
+    --shade-light: #2d251e;
+    --text: #efe6d8;
+    --muted: #a99b87;
+    --border: #382f26;
+    --accent: #e3a95b;
+    --accent-text: #1a1209;
+    --danger: #f08a80;
+    --warn-bg: #2c3317;
+    --warn-text: #d9e3a6;
   }
 }
 
@@ -51,27 +59,31 @@ button, input, textarea {
 input, textarea {
   width: 100%;
   padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--pressed);
 }
 
 button {
   padding: 0.55rem 1rem;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   background: var(--surface);
+  box-shadow: var(--raised-sm);
   cursor: pointer;
   min-height: 44px;
 }
+button:active:not(:disabled) { box-shadow: var(--pressed); }
 button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
 button.danger { color: var(--danger); }
-button:disabled { opacity: 0.5; cursor: default; }
+button:disabled { opacity: 0.5; cursor: default; box-shadow: none; border-color: var(--border); }
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: var(--raised);
   padding: 1rem;
 }
 
@@ -81,9 +93,10 @@ select {
   font: inherit;
   color: inherit;
   padding: 0.55rem 0.6rem;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--raised-sm);
   min-height: 44px;
   max-width: 100%;
 }
@@ -91,13 +104,16 @@ input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-button.ghost { background: none; border-color: transparent; }
-button.ghost:hover:not(:disabled) { background: var(--surface); border-color: var(--border); }
+button.ghost { background: none; border-color: transparent; box-shadow: none; }
+button.ghost:hover:not(:disabled) { box-shadow: var(--raised-sm); }
+button.ghost:active:not(:disabled) { box-shadow: var(--pressed); }
 a.button {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0.55rem 1rem; border-radius: var(--radius); min-height: 44px; text-decoration: none;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text); white-space: nowrap;
+  border: 1px solid transparent; background: var(--surface); color: var(--text); white-space: nowrap;
+  box-shadow: var(--raised-sm);
 }
+a.button:active { box-shadow: var(--pressed); }
 a.button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
 
 h1 { font-size: 1.6rem; overflow-wrap: anywhere; }
@@ -117,18 +133,18 @@ code { font-size: 0.9em; }
 .list.compact { gap: 0; }
 .list.compact li { padding: 0.15rem 0; }
 
+/* Scrolling rows get inner padding (offset by negative margin) so the soft shadows aren't clipped. */
 .tabs {
-  display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin: 1rem 0; overflow-x: auto; scrollbar-width: none;
+  display: flex; gap: 0.35rem; margin: 0.5rem -8px; padding: 8px; overflow-x: auto; scrollbar-width: none;
   position: sticky; top: var(--header-h); z-index: 10; background: var(--bg);
 }
-.tabs a { white-space: nowrap; }
 .tabs a {
-  padding: 0.6rem 0.9rem; text-decoration: none; color: var(--muted);
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  white-space: nowrap; padding: 0.5rem 0.9rem; text-decoration: none; color: var(--muted);
+  border-radius: var(--radius);
 }
-.tabs a[aria-current='page'] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.tabs a[aria-current='page'] { color: var(--text); box-shadow: var(--pressed); font-weight: 600; }
 
-.chips { display: flex; gap: 0.4rem; overflow-x: auto; margin-bottom: 1rem; scrollbar-width: none; }
+.chips { display: flex; gap: 0.6rem; overflow-x: auto; margin: -8px -8px 0.5rem; padding: 8px; scrollbar-width: none; }
 .chip {
   flex: none; border-radius: 999px; padding: 0.3rem 0.8rem; min-height: 36px; font-size: 0.9rem; white-space: nowrap;
 }

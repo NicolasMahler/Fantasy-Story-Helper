@@ -104,8 +104,8 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem 16px;
-    border-bottom: 1px solid var(--border);
     background: var(--surface);
+    box-shadow: 0 4px 10px var(--shade-dark);
     position: sticky;
     top: 0;
     z-index: 20;
