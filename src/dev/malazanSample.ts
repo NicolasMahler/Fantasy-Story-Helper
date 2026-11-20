@@ -29,7 +29,7 @@ const ENTRIES: Sample[] = [
   { type: 'character', name: 'Coll', description: 'Ruined noble of {{Darujhistan}}, betrayed by his wife; friend of {{Rallick Nom}}.' },
   { type: 'character', name: 'Baruk', description: 'High alchemist of {{Darujhistan}} and member of the {{T\'orrud Cabal}}, working quietly against the {{Malazan Empire}}.' },
   { type: 'character', name: 'Tool', description: 'A {{T\'lan Imass}} who accompanies {{Adjunct Lorn}} on her mission to the {{Gadrobi Hills}}.' },
-  { type: 'character', name: 'Cotillion', description: 'The Rope, patron of assassins and companion of Shadowthrone. Rides {{Sorry}} as a vessel.' },
+  { type: 'character', name: 'Cotillion', description: 'The Rope, patron of assassins and companion of {{Shadowthrone}}. One of the new {{Ascendants}} who only recently took the {{House of Shadow}}. Rides {{Sorry}} as a vessel. The old Emperor had a master assassin too, {{Dancer}} — see {{Fate of Kellanved and Dancer}}.' },
   // Locations
   { type: 'location', name: 'Genabackis', description: 'Continent where the {{Malazan Empire}} wages its campaign. Home to {{Pale}} and {{Darujhistan}}.' },
   { type: 'location', name: 'Pale', description: 'Free City on {{Genabackis}}, protected by {{Moon\'s Spawn}} until the {{Siege of Pale}}.' },
@@ -69,7 +69,7 @@ const ENTRIES: Sample[] = [
 
   // ——— Expanded Book 1 content ———
   // Malazan command and mages
-  { type: 'character', name: 'Empress Laseen', description: 'Ruler of the {{Malazan Empire}}. Once called Surly and head of the {{Claw}}, she took the throne after the deaths of Emperor Kellanved and Dancer. Trusts few, and is said to want the {{Bridgeburners}} gone.' },
+  { type: 'character', name: 'Empress Laseen', description: 'Ruler of the {{Malazan Empire}}. Once called Surly and head of the {{Claw}}, she took the throne by having {{Kellanved}} and {{Dancer}} killed. Trusts few, and is said to want the {{Bridgeburners}} gone.' },
   { type: 'character', name: 'Dujek Onearm', description: 'High Fist of the Malazan armies on {{Genabackis}}, commanding {{Onearm\'s Host}}. An old soldier from the Emperor\'s day and a friend of {{Whiskeyjack}}.' },
   { type: 'character', name: 'Tayschrenn', description: 'Imperial High Mage, loyal to {{Empress Laseen}}. Directs the sorcery at the {{Siege of Pale}}, where many of the Empire\'s own mages die. {{Tattersail}} distrusts him deeply.' },
   { type: 'character', name: 'Toc the Younger', description: 'Malazan scout and courier who loses an eye at the {{Siege of Pale}}. Rides with {{Adjunct Lorn}} and {{Tool}} toward the {{Gadrobi Hills}}.' },
@@ -93,7 +93,9 @@ const ENTRIES: Sample[] = [
   // Elsewhere on Genabackis
   { type: 'character', name: 'Caladan Brood', description: 'Warlord leading the armies that fight the {{Malazan Empire}} in the north of {{Genabackis}}. An ally of {{Anomander Rake}}, he carries a great hammer.' },
   { type: 'character', name: 'Lady Envy', description: 'Mysterious, beautiful and dangerous sorceress who arrives in {{Darujhistan}} and knows {{Anomander Rake}} of old.' },
-  { type: 'character', name: 'Shadowthrone', description: 'God who rules the Shadow Realm, master of the {{Hounds of Shadow}} and partner of {{Cotillion}}. Schemes against the {{Malazan Empire}}.' },
+  { type: 'character', name: 'Shadowthrone', description: 'God who rules the {{House of Shadow}}, master of the {{Hounds of Shadow}} and partner of {{Cotillion}}. A new Ascendant, openly hostile to the {{Malazan Empire}} and to {{Empress Laseen}} in particular. See {{Fate of Kellanved and Dancer}}.' },
+  { type: 'character', name: 'Kellanved', description: "The first Emperor of the {{Malazan Empire}}, a mage who built it from {{Malaz City}}. Killed on {{Empress Laseen}}'s orders, or so the official story goes. See {{Fate of Kellanved and Dancer}}." },
+  { type: 'character', name: 'Dancer', description: "{{Kellanved}}'s companion and master assassin, killed alongside him on {{Empress Laseen}}'s orders. See {{Fate of Kellanved and Dancer}}." },
   // Places
   { type: 'location', name: 'Malaz City', description: 'Island port where the Empire began. As a boy, {{Ganoes Paran}} watches the {{Purge of the Mouse}} from the walls of Mock\'s Hold.' },
   { type: 'location', name: 'Itko Kan', description: 'Coastal province of the {{Malazan Empire}} on Quon Tali, where the {{Massacre at Gerrom}} takes place.' },
@@ -119,8 +121,11 @@ const ENTRIES: Sample[] = [
   { type: 'religion', name: 'Gedderone', description: 'The Lady of Spring, celebrated in {{Darujhistan}} at the {{Fête of Gedderone}}.' },
   // Lore
   { type: 'lore', name: 'Ascendants', description: 'Beings who have risen to godlike power, such as {{Anomander Rake}}. Gods and Ascendants move through the {{Deck of Dragons}} and use mortals as pieces, as {{Oponn}} does.' },
-  { type: 'lore', name: 'Old Guard', description: 'The soldiers and officers who served the old Emperor, Kellanved. {{Empress Laseen}} distrusts them, among them {{Dujek Onearm}}, {{Whiskeyjack}} and the {{Bridgeburners}}.' },
+  { type: 'lore', name: 'Fate of Kellanved and Dancer', description: "Officially, {{Kellanved}} and {{Dancer}} were assassinated on {{Empress Laseen}}'s orders. But the book drops hints: the {{House of Shadow}} stood empty until recently, when {{Shadowthrone}} and {{Cotillion}} ascended to it; {{Cotillion}}, the Rope, is patron of assassins, just as {{Dancer}} was the Emperor's assassin; and {{Shadowthrone}} is openly hostile to the Empire and to Laseen. Book 1 never says outright that they are the same pair." },
+  { type: 'lore', name: 'House of Shadow', description: 'The realm and throne of Shadow, empty until recently, now held by {{Shadowthrone}} and {{Cotillion}}, with the {{Hounds of Shadow}} at their call.' },
+  { type: 'lore', name: 'Old Guard', description: 'The soldiers and officers who served the old Emperor, {{Kellanved}}. {{Empress Laseen}} distrusts them, among them {{Dujek Onearm}}, {{Whiskeyjack}} and the {{Bridgeburners}}.' },
   // Events
+  { type: 'event', name: 'Assassination of Kellanved and Dancer', description: '{{Empress Laseen}} has the Emperor {{Kellanved}} and {{Dancer}} killed and takes the throne, as told in Book 1. See {{Fate of Kellanved and Dancer}}.' },
   { type: 'event', name: 'Purge of the Mouse', description: 'A bloody cleansing of the Mouse quarter of {{Malaz City}} ordered from above, witnessed by the young {{Ganoes Paran}}. The book\'s prologue.' },
   { type: 'event', name: 'Massacre at Gerrom', description: 'The {{Hounds of Shadow}} slaughter the people of {{Gerrom}}. {{Ganoes Paran}} rides with {{Adjunct Lorn}} to investigate, and the fisher girl who will be {{Sorry}} is taken by {{Cotillion}}.' },
   { type: 'event', name: 'Death of Hairlock', description: 'The {{Hounds of Shadow}} come for {{Hairlock}}\'s puppet body and tear it apart in front of {{Tattersail}}.' },
@@ -222,6 +227,10 @@ const EVENTS: EventSample[] = [
     name: 'Birth of Silverfox', date: { relative: 'Fête of Gedderone', offset: 0 },
     participants: [['Silverfox'], ['Tattersail'], ['Rhivi']],
   },
+  {
+    name: 'Assassination of Kellanved and Dancer', mode: 'recounted', date: null,
+    participants: [['Kellanved', 'victim'], ['Dancer', 'victim'], ['Empress Laseen', 'ordered it'], ['Malazan Empire']],
+  },
   // Undated + recounted example (timeline: Undated section; chart: not plotted).
   {
     name: 'Betrayal of Coll', mode: 'recounted', told: 'Rallick Nom', date: null,
@@ -279,6 +288,12 @@ const LINKS: [from: string, kind: string, to: string, note?: string][] = [
   ['Silverfox', 'member of', 'Rhivi'],
   ['Moranth', 'ally', 'Malazan Empire'],
   ['Shadowthrone', 'partners', 'Cotillion'],
+  ['Kellanved', 'partners', 'Dancer'],
+  ['Empress Laseen', 'killed', 'Kellanved', 'officially'],
+  ['Empress Laseen', 'killed', 'Dancer', 'officially'],
+  ['Shadowthrone', 'rules', 'House of Shadow'],
+  ['Cotillion', 'rules', 'House of Shadow'],
+  ['Shadowthrone', 'hostile to', 'Empress Laseen'],
   ['Shadowthrone', 'commands', 'Hounds of Shadow'],
   ['Anomander Rake', 'ally', 'Caladan Brood'],
   ['Rhivi', 'ally', 'Caladan Brood'],
