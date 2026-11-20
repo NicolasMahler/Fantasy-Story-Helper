@@ -56,7 +56,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       ranked.push({
         rank: s.name.toLowerCase().startsWith(ql) ? -1 : inName ? 0 : 2,
         r: {
-          kind: 'series', id: s.id, seriesId: s.id, name: s.name, icon: '📚', color: '#a58cf0', typeName: 'Series',
+          kind: 'series', id: s.id, seriesId: s.id, name: s.name, icon: 'books', color: '#a58cf0', typeName: 'Series',
           field: inName ? 'name' : 'description', snippet: inName ? null : makeSnippet(s.description, q),
         },
       });
@@ -113,7 +113,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
   )) {
     ranked.push({
       rank: 3,
-      r: { kind: 'book', id: b.id, seriesId: b.series_id, name: `Book ${b.number}: ${b.title}`, icon: '📖', color: '#8a8f99', typeName: 'Book', field: 'title', snippet: null },
+      r: { kind: 'book', id: b.id, seriesId: b.series_id, name: `Book ${b.number}: ${b.title}`, icon: 'book', color: '#8a8f99', typeName: 'Book', field: 'title', snippet: null },
     });
   }
   for (const a of db.query<{ id: number; series_id: number; name: string }>(
@@ -121,7 +121,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
   )) {
     ranked.push({
       rank: 3,
-      r: { kind: 'age', id: a.id, seriesId: a.series_id, name: a.name, icon: '⏳', color: '#a58cf0', typeName: 'Age', field: 'name', snippet: null },
+      r: { kind: 'age', id: a.id, seriesId: a.series_id, name: a.name, icon: 'hourglass', color: '#a58cf0', typeName: 'Age', field: 'name', snippet: null },
     });
   }
 

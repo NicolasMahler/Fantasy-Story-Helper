@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import type { EventDetail, EventInput, EventMode } from '../db/events';
   import { ROLE_SUGGESTIONS } from '../db/events';
@@ -209,7 +210,7 @@
         <dd>{detail.book ? `Book ${detail.book.number}: ${detail.book.title}` : '(no book)'}</dd>
         {#if detail.toldBy}
           <dt>Told by</dt>
-          <dd><a href={href({ name: 'entity', seriesId, entityId: detail.toldBy.id })}>{detail.toldBy.icon} {detail.toldBy.name}</a></dd>
+          <dd><a href={href({ name: 'entity', seriesId, entityId: detail.toldBy.id })}><Icon name={detail.toldBy.icon} size={14} /> {detail.toldBy.name}</a></dd>
         {/if}
       </dl>
     {/if}
@@ -223,7 +224,7 @@
       <ul class="list compact">
         {#each detail.participants as p (p.id)}
           <li class="row p">
-            <a class="grow" href={href({ name: 'entity', seriesId, entityId: p.entityId })}>{p.icon} {p.name}</a>
+            <a class="grow" href={href({ name: 'entity', seriesId, entityId: p.entityId })}><Icon name={p.icon} size={14} color={p.color} /> {p.name}</a>
             <input
               class="role"
               list="role-suggestions"

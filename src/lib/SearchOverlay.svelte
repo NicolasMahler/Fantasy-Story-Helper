@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { tick } from 'svelte';
   import { rpc } from '../db/client';
   import type { SearchResult } from '../db/search';
@@ -69,7 +70,7 @@
   <div class="backdrop" role="presentation" onclick={() => (open = false)}></div>
   <div class="dialog" role="dialog" aria-modal="true" aria-label="Search">
     <div class="bar">
-      <span aria-hidden="true">🔍</span>
+      <Icon name="search" size={18} />
       <input
         bind:this={input}
         bind:value={q}
@@ -95,7 +96,7 @@
         {#each results as r, i (`${r.kind}:${r.id}`)}
           <li role="option" aria-selected={i === active}>
             <a href={target(r)} onclick={() => (open = false)} onmouseenter={() => (active = i)}>
-              <span class="icon" style:--c={r.color} aria-hidden="true">{r.icon}</span>
+              <span class="icon" style:--c={r.color} aria-hidden="true"><Icon name={r.icon} size={16} /></span>
               <span class="body">
                 <span class="name">{r.name}</span>
                 <small class="muted">{fieldLabel(r)}</small>

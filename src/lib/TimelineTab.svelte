@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { iconText } from './icons';
+  import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import type { TimelineData } from '../db/timeline';
   import type { EntityTypeRow } from '../db/entityTypes';
@@ -70,11 +72,11 @@
 
   <div class="filters" aria-label="Filters">
     {#each picked as p (p.id)}
-      <button class="chip set" onclick={() => (picked = picked.filter((x) => x.id !== p.id))} aria-label={`Remove filter ${p.name}`}>{p.icon} {p.name} ✕</button>
+      <button class="chip set" onclick={() => (picked = picked.filter((x) => x.id !== p.id))} aria-label={`Remove filter ${p.name}`}><Icon name={p.icon} size={14} /> {p.name} ✕</button>
     {/each}
     {#if typeId !== null}
       {@const t = types.find((x) => x.id === typeId)}
-      <button class="chip set" onclick={() => (typeId = null)}>Involves {t?.icon} {t?.name} ✕</button>
+      <button class="chip set" onclick={() => (typeId = null)}>Involves <Icon name={t?.icon ?? ''} size={14} color={t?.color} /> {t?.name} ✕</button>
     {/if}
     {#if bookId !== null}
       {@const b = data.books.find((x) => x.id === bookId)}
@@ -86,7 +88,7 @@
     {#if typeId === null}
       <select class="chip-select" aria-label="Filter by participant type" onchange={(e) => { const v = e.currentTarget.value; typeId = v ? Number(v) : null; e.currentTarget.value = ''; }}>
         <option value="">+ Type</option>
-        {#each participantTypes as t (t.id)}<option value={t.id}>{t.icon} {t.name}</option>{/each}
+        {#each participantTypes as t (t.id)}<option value={t.id}>{iconText(t.icon)} {t.name}</option>{/each}
       </select>
     {/if}
     {#if bookId === null && data.books.length}

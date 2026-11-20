@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { tokenize } from '../db/mentions';
   import type { LinkTarget } from '../db/entities';
   import { href } from './route';
@@ -13,7 +14,7 @@
     {#if s.kind === 'text'}{s.text}{:else if links[s.id]}<a
         class="mention"
         style:--c={links[s.id].color}
-        href={href({ name: 'entity', seriesId, entityId: s.id })}>{links[s.id].icon} {links[s.id].name}</a
+        href={href({ name: 'entity', seriesId, entityId: s.id })}><Icon name={links[s.id].icon} size={14} /> {links[s.id].name}</a
       >{:else}{s.label}{/if}
   {/each}
 </div>

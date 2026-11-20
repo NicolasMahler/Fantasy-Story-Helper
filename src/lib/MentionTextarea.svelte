@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { iconText } from './icons';
+  import Icon from './Icon.svelte';
   import { tick } from 'svelte';
   import { rpc } from '../db/client';
   import { parseAtQuery, formatMention, type AtQuery } from '../db/mentions';
@@ -125,7 +127,7 @@
     <div class="popup create pop-in" role="dialog" aria-label="Create entry">
       <span>Create <strong>{query.term.trim()}</strong> as</span>
       <select bind:value={createTypeId} aria-label="Type for new entry">
-        {#each types as t (t.id)}<option value={t.id}>{t.icon} {t.name}</option>{/each}
+        {#each types as t (t.id)}<option value={t.id}>{iconText(t.icon)} {t.name}</option>{/each}
       </select>
       <button type="button" class="primary" onmousedown={(e) => e.preventDefault()} onclick={create}>Create</button>
       <button type="button" class="ghost" onclick={() => { creating = false; ta.focus(); }}>Back</button>
@@ -136,7 +138,7 @@
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => choose(i)}>
-            <span aria-hidden="true">{r.icon}</span> {r.name} <small class="muted">{r.type_name}</small>
+            <Icon name={r.icon} size={15} color={r.color} /> {r.name} <small class="muted">{r.type_name}</small>
           </button>
         </li>
       {/each}

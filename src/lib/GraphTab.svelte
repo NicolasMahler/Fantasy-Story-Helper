@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { plural } from './text';
   import { onDestroy } from 'svelte';
   import {
@@ -12,6 +13,7 @@
   import { buildGraph, type ModelEdge, type ModelNode } from './graphModel';
   import { href } from './route';
   import { reducedMotion } from './motion';
+  import { ICONS, isIconName } from './icons';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -201,7 +203,7 @@
   <div class="controls">
     <div class="chips" role="group" aria-label="Types shown">
       {#each data.types as t (t.id)}
-        <button class="chip" style:--c={t.color} aria-pressed={typeIds.includes(t.id)} onclick={() => toggleType(t.id)}>{t.icon} {t.name}</button>
+        <button class="chip" style:--c={t.color} aria-pressed={typeIds.includes(t.id)} onclick={() => toggleType(t.id)}><Icon name={t.icon} size={14} color={t.color} /> {t.name}</button>
       {/each}
     </div>
     <div class="row opts">
@@ -263,7 +265,12 @@
                   onkeydown={(ev) => ev.key === 'Enter' && (selected = { kind: 'node', id: n.id })}
                 >
                   <circle r={r} fill={n.color} />
-                  <text class="icon" y={r * 0.35} font-size={Math.max(10, r * 0.9)}>{n.icon}</text>
+                  {#if isIconName(n.icon)}
+                    {@const s = Math.max(10, r * 1.05)}
+                    <svg class="icon" x={-s / 2} y={-s / 2} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{@html ICONS[n.icon]}</svg>
+                  {:else}
+                    <text class="icon" y={r * 0.35} font-size={Math.max(10, r * 0.9)}>{n.icon}</text>
+                  {/if}
                   <text class="name" y={r + 13}>{n.name}</text>
                 </g>
               {/if}
@@ -287,7 +294,7 @@
       {#if selectedEdge}
         {@const a = nodeById.get(selectedEdge.a)!}
         {@const b = nodeById.get(selectedEdge.b)!}
-        <h3>{a.icon} {a.name} ↔ {b.icon} {b.name}</h3>
+        <h3><Icon name={a.icon} size={16} color={a.color} /> {a.name} ↔ <Icon name={b.icon} size={16} color={b.color} /> {b.name}</h3>
         <p class="sub">
           {plural(selectedEdge.shared.length, 'shared event')}{bookId ? ' in this book' : ''}
           · {selectedEdge.links.length ? plural(selectedEdge.links.length, 'relationship') : 'no hand-made relationship'}
@@ -307,12 +314,12 @@
         {/if}
         <a class="action" href={href({ name: 'entity', seriesId, entityId: a.id })}>+ Add a relationship (on {a.name}'s page)</a>
       {:else if selectedNode}
-        <h3>{selectedNode.icon} {selectedNode.name}</h3>
+        <h3><Icon name={selectedNode.icon} size={16} color={selectedNode.color} /> {selectedNode.name}</h3>
         <p class="sub">{plural(selectedNode.degree, 'connection')}</p>
         <ul>
           {#each nodeEdges as { edge, other } (edge.key)}
             <li>
-              <button class="linkish" onclick={() => (selected = { kind: 'edge', key: edge.key })}>{other.icon} {other.name}</button>
+              <button class="linkish" onclick={() => (selected = { kind: 'edge', key: edge.key })}><Icon name={other.icon} size={14} color={other.color} /> {other.name}</button>
               <small>{[edge.shared.length ? `${edge.shared.length} shared` : '', ...edge.links.map((l) => l.kind)].filter(Boolean).join(' · ')}</small>
             </li>
           {/each}
@@ -361,6 +368,7 @@
   .node.sel circle { stroke: var(--text); stroke-width: 3; }
   .node.dim { opacity: 0.2; }
   .node .icon { text-anchor: middle; pointer-events: none; }
+  .node svg.icon { stroke: var(--bg); overflow: visible; }
   .node .name {
     fill: var(--text); font-size: 11px; text-anchor: middle; pointer-events: none;
     paint-order: stroke; stroke: var(--bg); stroke-width: 3px;

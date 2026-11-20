@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import type { TimelineEvent } from '../db/timeline';
   import { href } from './route';
 
@@ -33,7 +34,7 @@
       {#if event.participants.length}
         <div class="who">
           {#each event.participants as p (`${p.entityId}:${p.role}`)}
-            <a href={href({ name: 'entity', seriesId, entityId: p.entityId })}>{p.icon} {p.name}{p.role !== 'participant' && p.role !== 'location' ? ` · ${p.role}` : ''}</a>
+            <a href={href({ name: 'entity', seriesId, entityId: p.entityId })}><Icon name={p.icon} size={13} /> {p.name}{p.role !== 'participant' && p.role !== 'location' ? ` · ${p.role}` : ''}</a>
           {/each}
         </div>
       {/if}

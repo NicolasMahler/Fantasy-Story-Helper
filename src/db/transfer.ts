@@ -1,7 +1,7 @@
 /** JSON import: replace everything, or add the file's series alongside existing data. */
 import type { SqlDb } from './types';
 import { insertId } from './sql';
-import { currentVersion } from './migrations';
+import { currentVersion, LINE_ICONS_SQL } from './migrations';
 import { DATA_TABLES, type DataTable, type JsonDump } from './dump';
 import { recomputeSeries } from './events';
 import { MENTION_RE } from './mentions';
@@ -169,5 +169,10 @@ function importAdd(db: SqlDb, dump: JsonDump): ImportResult {
 /** Imports a JSON dump in one transaction; nothing changes if anything fails. */
 export function importJson(db: SqlDb, raw: unknown, mode: ImportMode): ImportResult {
   const dump = validateDump(raw, currentVersion(db));
-  return db.transaction(() => (mode === 'replace' ? importReplace(db, dump) : importAdd(db, dump)));
+  return db.transaction(() => {
+    const result = mode === 'replace' ? importReplace(db, dump) : importAdd(db, dump);
+    // Exports from before v3 carry the old emoji; give their untouched built-in types the line icons too.
+    if ((dump.schemaVersion ?? 0) < 3) db.exec(LINE_ICONS_SQL);
+    return result;
+  });
 }

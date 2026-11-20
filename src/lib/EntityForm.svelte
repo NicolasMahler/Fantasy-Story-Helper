@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { iconText } from './icons';
   import { rpc } from '../db/client';
   import type { EntityDetail, Attributes } from '../db/entities';
   import type { EntityTypeRow } from '../db/entityTypes';
@@ -88,7 +89,7 @@
   <div class="row">
     <label class="grow">Type
       <select bind:value={typeId}>
-        {#each types as t (t.id)}<option value={t.id}>{t.icon} {t.name}</option>{/each}
+        {#each types as t (t.id)}<option value={t.id}>{iconText(t.icon)} {t.name}</option>{/each}
       </select>
     </label>
     <label class="grow">First appears in

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import { LINK_KINDS, type LinkRow } from '../db/links';
   import { href } from './route';
@@ -70,7 +71,7 @@
       {#each links as l (l.id)}
         <li class="rel">
           <span class="kind">{l.direction === 'out' ? '' : '← '}{l.kind}{l.direction === 'out' ? ' →' : ''}</span>
-          <a href={href({ name: 'entity', seriesId, entityId: l.other.id })}>{l.other.icon} {l.other.name}</a>
+          <a href={href({ name: 'entity', seriesId, entityId: l.other.id })}><Icon name={l.other.icon} size={14} color={l.other.color} /> {l.other.name}</a>
           {#if l.startEvent || l.endEvent || l.note}
             <small class="muted">
               {#if l.note}{l.note}{/if}
