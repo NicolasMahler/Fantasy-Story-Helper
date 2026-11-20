@@ -319,8 +319,8 @@
 
 <style>
   .controls { display: grid; gap: 8px; margin-bottom: 10px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { border-radius: 999px; padding: 0.2rem 0.75rem; min-height: 34px; font-size: 0.82rem; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px 10px; margin-bottom: 0; }
+  .chip { border-radius: 999px; padding: 0.25rem 0.9rem; min-height: 36px; font-size: 0.82rem; color: var(--muted); }
   .chip[aria-pressed='true'] { border-color: var(--c); color: var(--text); background: color-mix(in srgb, var(--c) 18%, transparent); }
   .opts { gap: 12px; font-size: 0.85rem; color: var(--muted); }
   .opts select { min-height: 34px; padding: 0.2rem 0.5rem; font-size: 0.85rem; }
