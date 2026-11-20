@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import type { EntityListItem } from '../db/entities';
@@ -6,23 +7,33 @@
   import { href } from './route';
   import { rise } from './motion';
   import { STATUS_LABELS, type TheoryStatus } from '../db/theories';
+  import { loadFilter, saveFilter } from './entriesFilter';
 
   let { seriesId }: { seriesId: number } = $props();
 
   let types = $state<EntityTypeRow[]>([]);
   let entries = $state<EntityListItem[]>([]);
-  let typeId = $state<number | null>(null);
-  let search = $state('');
+  // Picks up where the reader left off in this series (see entriesFilter.ts). The tab is re-created
+  // for each series (keyed in App), so reading seriesId once is enough.
+  const start = untrack(() => loadFilter(seriesId));
+  let typeId = $state<number | null>(start.typeId);
+  let search = $state(start.search);
   /** Only offered while the Theory type is picked. */
-  let theoryStatus = $state<TheoryStatus | null>(null);
+  let theoryStatus = $state<TheoryStatus | null>(start.theoryStatus);
   const theoryType = $derived(types.find((t) => t.key === 'theory'));
   const showingTheories = $derived(theoryType !== undefined && typeId === theoryType.id);
   const THEORY_FILTERS: TheoryStatus[] = ['open', 'confirmed', 'wrong', 'answered'];
   let loaded = $state(false);
 
   $effect(() => {
-    rpc('listTypes', seriesId).then((t) => (types = t));
+    rpc('listTypes', seriesId).then((t) => {
+      types = t;
+      // A remembered type may have been deleted since.
+      if (typeId !== null && !t.some((x) => x.id === typeId)) typeId = null;
+    });
   });
+
+  $effect(() => saveFilter(seriesId, { typeId, search, theoryStatus }));
 
   $effect(() => {
     const filter = { typeId, search, theoryStatus: showingTheories ? theoryStatus : null };
