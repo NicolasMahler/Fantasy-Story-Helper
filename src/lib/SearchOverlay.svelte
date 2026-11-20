@@ -114,13 +114,15 @@
 {/if}
 
 <style>
-  .backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.45); z-index: 40; }
+  .backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.45); z-index: 40; animation: page-in 0.16s var(--ease); }
   .dialog {
     position: fixed; z-index: 41; left: 50%; top: max(8vh, env(safe-area-inset-top));
     transform: translateX(-50%); width: min(640px, calc(100vw - 24px)); max-height: 80vh; display: flex; flex-direction: column;
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgb(0 0 0 / 0.5);
-    overflow: hidden;
+    overflow: hidden; transform-origin: top center; animation: dialog-in 0.18s var(--ease);
   }
+  /* Keeps the centering translate while growing in. */
+  @keyframes dialog-in { from { opacity: 0; transform: translateX(-50%) translateY(-4px) scale(0.98); } }
   .bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
   .bar input { border: none; background: none; font-size: 1.05rem; padding: 0.5rem 0.25rem; }
   .bar input:focus-visible { outline: none; }

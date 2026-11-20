@@ -14,6 +14,8 @@
   let hash = $state(location.hash);
   const route = $derived(parseRoute(hash));
   const currentSeries = $derived('seriesId' in route ? route.seriesId : null);
+  /** Changes when a different page opens, so its content fades in. Series tabs fade on their own inside SeriesPage. */
+  const pageKey = $derived(route.name === 'series' ? `series:${route.seriesId}` : hash);
   let searchOpen = $state(false);
   let headerH = $state(52);
   $effect(() => document.documentElement.style.setProperty('--header-h', `${headerH}px`));
@@ -61,6 +63,7 @@
 {/if}
 
 <main>
+  {#key pageKey}<div class="page-in">
   {#if error}
     <p class="card">Couldn't open the database: {error}</p>
   {:else if !info}
@@ -85,6 +88,7 @@
   {:else}
     <p>Page not found. <a href="#/">Go to the library</a>.</p>
   {/if}
+  </div>{/key}
 </main>
 
 {#if update.ready}

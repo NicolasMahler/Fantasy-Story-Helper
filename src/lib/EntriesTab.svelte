@@ -3,6 +3,7 @@
   import type { EntityListItem } from '../db/entities';
   import type { EntityTypeRow } from '../db/entityTypes';
   import { href } from './route';
+  import { rise } from './motion';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -45,8 +46,8 @@
   </p>
 {:else}
   <ul class="list compact">
-    {#each entries as e (e.id)}
-      <li>
+    {#each entries as e, i (e.id)}
+      <li in:rise={{ index: i }}>
         <a class="entry" href={href({ name: 'entity', seriesId, entityId: e.id })}>
           <span class="dot" style:background={e.color} aria-hidden="true"></span>
           <span class="icon" aria-hidden="true">{e.icon}</span>

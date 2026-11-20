@@ -69,7 +69,7 @@
     aria-autocomplete="list"
   />
   {#if open}
-    <ul class="popup" role="listbox" id={listId}>
+    <ul class="popup pop-in" role="listbox" id={listId}>
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => pick(r)}>

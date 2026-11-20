@@ -7,6 +7,7 @@
   import TimelineStory from './TimelineStory.svelte';
   import TimelineReading from './TimelineReading.svelte';
   import TimelineChart from './TimelineChart.svelte';
+  import { slideIndicator } from './motion';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -60,7 +61,8 @@
 </script>
 
 {#if data}
-  <div class="seg" role="tablist" aria-label="Timeline view">
+  <div class="seg" role="tablist" aria-label="Timeline view" use:slideIndicator={"[aria-selected='true']"}>
+    <span class="slide-indicator" aria-hidden="true"></span>
     {#each views as v (v.id)}
       <button role="tab" aria-selected={view === v.id} onclick={() => setView(v.id)}>{v.label}</button>
     {/each}
@@ -128,9 +130,15 @@
 {/if}
 
 <style>
-  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; border-radius: 999px; padding: 5px; margin-bottom: 14px; box-shadow: var(--pressed); }
-  .seg button { border: none; background: none; box-shadow: none; border-radius: 999px; min-height: 34px; padding: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); }
-  .seg button[aria-selected='true'] { background: var(--accent); color: var(--accent-text); font-weight: 600; box-shadow: var(--raised-sm); }
+  .seg { position: relative; display: inline-flex; flex-wrap: wrap; gap: 4px; border-radius: 999px; padding: 5px; margin-bottom: 14px; box-shadow: var(--pressed); }
+  .seg button { position: relative; border: none; background: none; box-shadow: none; border-radius: 999px; min-height: 34px; padding: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); }
+  .seg button[aria-selected='true'] { color: var(--accent-text); font-weight: 600; }
+  .seg button:active { transform: none; box-shadow: none; }
+  /* The amber pill glides between options (see slideIndicator). */
+  .slide-indicator {
+    position: absolute; border-radius: 999px; background: var(--accent); box-shadow: var(--raised-sm);
+    transition: left 0.28s var(--ease-spring), top 0.28s var(--ease-spring), width 0.28s var(--ease-spring), height 0.28s var(--ease-spring);
+  }
   .filters { display: flex; flex-wrap: wrap; gap: 12px 10px; margin-bottom: 14px; }
   .chip { border-radius: 999px; padding: 0.25rem 0.9rem; min-height: 36px; font-size: 0.82rem; color: var(--muted); }
   .chip.set { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 15%, transparent); }

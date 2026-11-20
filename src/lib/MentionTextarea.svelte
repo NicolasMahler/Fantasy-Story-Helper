@@ -122,7 +122,7 @@
   ></textarea>
 
   {#if query && creating}
-    <div class="popup create" role="dialog" aria-label="Create entry">
+    <div class="popup create pop-in" role="dialog" aria-label="Create entry">
       <span>Create <strong>{query.term.trim()}</strong> as</span>
       <select bind:value={createTypeId} aria-label="Type for new entry">
         {#each types as t (t.id)}<option value={t.id}>{t.icon} {t.name}</option>{/each}
@@ -132,7 +132,7 @@
       {#if error}<p class="error">{error}</p>{/if}
     </div>
   {:else if open}
-    <ul class="popup" id={listId} role="listbox">
+    <ul class="popup pop-in" id={listId} role="listbox">
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => choose(i)}>

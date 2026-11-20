@@ -18,6 +18,10 @@
   --raised: 5px 5px 10px var(--shade-dark), -5px -5px 10px var(--shade-light);
   --raised-sm: 3px 3px 6px var(--shade-dark), -3px -3px 6px var(--shade-light);
   --pressed: inset 2px 2px 5px var(--shade-dark), inset -2px -2px 5px var(--shade-light);
+  /* Motion: a quick ease for presses and fades, a slight overshoot for sliding selections. */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.3, 1.3, 0.5, 1);
+  --press: box-shadow 0.16s var(--ease), transform 0.16s var(--ease), background-color 0.2s var(--ease), color 0.2s var(--ease);
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -73,8 +77,9 @@ button {
   box-shadow: var(--raised-sm);
   cursor: pointer;
   min-height: 44px;
+  transition: var(--press);
 }
-button:active:not(:disabled) { box-shadow: var(--pressed); }
+button:active:not(:disabled) { box-shadow: var(--pressed); transform: scale(0.97); }
 button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
 button.danger { color: var(--danger); }
 button:disabled { opacity: 0.5; cursor: default; box-shadow: none; border-color: var(--border); }
@@ -99,7 +104,9 @@ select {
   box-shadow: var(--raised-sm);
   min-height: 44px;
   max-width: 100%;
+  transition: var(--press);
 }
+select:active { box-shadow: var(--pressed); }
 input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -112,8 +119,9 @@ a.button {
   padding: 0.55rem 1rem; border-radius: var(--radius); min-height: 44px; text-decoration: none;
   border: 1px solid transparent; background: var(--surface); color: var(--text); white-space: nowrap;
   box-shadow: var(--raised-sm);
+  transition: var(--press);
 }
-a.button:active { box-shadow: var(--pressed); }
+a.button:active { box-shadow: var(--pressed); transform: scale(0.97); }
 a.button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
 
 h1 { font-size: 1.6rem; overflow-wrap: anywhere; }
@@ -139,10 +147,15 @@ code { font-size: 0.9em; }
   position: sticky; top: var(--header-h); z-index: 10; background: var(--bg);
 }
 .tabs a {
-  white-space: nowrap; padding: 0.5rem 0.9rem; text-decoration: none; color: var(--muted);
-  border-radius: var(--radius);
+  position: relative; white-space: nowrap; padding: 0.5rem 0.9rem; text-decoration: none; color: var(--muted);
+  border-radius: var(--radius); transition: color 0.2s var(--ease);
 }
-.tabs a[aria-current='page'] { color: var(--text); box-shadow: var(--pressed); font-weight: 600; }
+.tabs a[aria-current='page'] { color: var(--text); font-weight: 600; }
+/* The pressed-in well glides to the current tab (see slideIndicator in src/lib/motion.ts). */
+.tabs .slide-indicator {
+  position: absolute; border-radius: var(--radius); box-shadow: var(--pressed);
+  transition: left 0.28s var(--ease-spring), width 0.28s var(--ease-spring);
+}
 
 .chips { display: flex; gap: 0.6rem; overflow-x: auto; margin: -8px -8px 0.5rem; padding: 8px; scrollbar-width: none; }
 .chip {
@@ -156,4 +169,20 @@ code { font-size: 0.9em; }
    field at 16px so tapping one never zooms the page (pinch-zoom still works). Desktop sizes are unchanged. */
 @media (pointer: coarse) {
   input, textarea, select { font-size: 16px !important; }
+}
+
+/* Content fades in when the page or tab changes. Opacity only: a transform here would break sticky and fixed children. */
+@keyframes page-in { from { opacity: 0; } }
+.page-in { animation: page-in 0.14s var(--ease); }
+
+/* Pop-ups (menus, suggestion lists) grow in slightly from just below their anchor. */
+@keyframes pop-in { from { opacity: 0; transform: translateY(-2px) scale(0.98); } }
+.pop-in { animation: pop-in 0.14s var(--ease); transform-origin: top center; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
