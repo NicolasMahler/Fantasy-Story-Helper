@@ -52,7 +52,11 @@
         <a class="entry" href={href({ name: 'entity', seriesId, entityId: e.id })}>
           <span class="dot" style:background={e.color} aria-hidden="true"></span>
           <span class="icon"><Icon name={e.icon} size={17} color={e.color} /></span>
-          <span class="name">{e.name}</span>
+          <span class="name">
+            {e.name}
+            {#if e.alias}<small class="aka">aka {e.alias}</small>{/if}
+            {#if e.snippet}<small class="why">{e.snippet}</small>{/if}
+          </span>
           <small class="muted">{e.type_name}{e.first_book_number ? ` · Book ${e.first_book_number}` : ''}</small>
         </a>
       </li>
@@ -69,5 +73,10 @@
   }
   .entry:hover { background: var(--surface); }
   .dot { width: 4px; align-self: stretch; border-radius: 2px; }
-  .name { flex: 1; font-weight: 500; }
+  .name { flex: 1; min-width: 0; font-weight: 500; }
+  .aka { font-weight: 400; margin-left: 0.25rem; }
+  .why {
+    display: block; font-weight: 400; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 </style>

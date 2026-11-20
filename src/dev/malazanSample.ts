@@ -5,8 +5,8 @@ import { rpc } from '../db/client';
  * Keep every entry and event within Book 1.
  * Descriptions write links as {{Entry name}}; they are turned into real @-links once every entry exists.
  */
-/** `book` is the book number the entry first appears in (default 1). */
-type Sample = { type: string; name: string; description: string; book?: number };
+/** `book` is the book number the entry first appears in (default 1). `aka` lists other names it goes by. */
+type Sample = { type: string; name: string; description: string; book?: number; aka?: string[] };
 
 const BOOKS = ['Gardens of the Moon'];
 
@@ -14,26 +14,26 @@ const SERIES = 'Malazan Book of the Fallen';
 
 const ENTRIES: Sample[] = [
   // Characters
-  { type: 'character', name: 'Ganoes Paran', description: 'Noble-born Malazan officer recruited by {{Adjunct Lorn}} and later given command of {{Whiskeyjack}}\'s squad of {{Bridgeburners}}. Becomes a pawn of {{Oponn}} through the sword {{Chance}}.' },
+  { type: 'character', name: 'Ganoes Paran', aka: ['Captain Paran', 'Paran'], description: 'Noble-born Malazan officer recruited by {{Adjunct Lorn}} and later given command of {{Whiskeyjack}}\'s squad of {{Bridgeburners}}. Becomes a pawn of {{Oponn}} through the sword {{Chance}}.' },
   { type: 'character', name: 'Whiskeyjack', description: 'Weary, principled sergeant of the {{Bridgeburners}}\' Ninth Squad. Survives the {{Siege of Pale}} and leads the squad into {{Darujhistan}}.' },
   { type: 'character', name: 'Kalam', description: 'Bridgeburner corporal and former member of the {{Claw}}. Partners with {{Quick Ben}} in {{Darujhistan}}.' },
   { type: 'character', name: 'Quick Ben', description: 'Squad mage of the {{Bridgeburners}}, far more powerful and secretive than he lets on. Schemes against {{Hairlock}} alongside {{Kalam}}.' },
   { type: 'character', name: 'Sorry', description: 'A quiet recruit in {{Whiskeyjack}}\'s squad — in truth a fisher girl possessed by {{Cotillion}}, the Rope.' },
   { type: 'character', name: 'Tattersail', description: 'Malazan cadre mage who survives the {{Siege of Pale}}. Reads the {{Deck of Dragons}} and grows close to {{Ganoes Paran}}.' },
   { type: 'character', name: 'Hairlock', description: 'Cadre mage whose shattered body is replaced by a wooden puppet. A dangerous ally of {{Tattersail}} and {{Quick Ben}}.' },
-  { type: 'character', name: 'Adjunct Lorn', description: 'The Empress\'s Adjunct, hunter of rogue sorcery for the {{Malazan Empire}}. Carries an {{Otataral}} sword and seeks to free the {{Jaghut Tyrant}}.' },
-  { type: 'character', name: 'Anomander Rake', description: 'Son of Darkness, lord of the {{Tiste Andii}} and master of {{Moon\'s Spawn}}. Wields the sword {{Dragnipur}}.' },
-  { type: 'character', name: 'Crokus Younghand', description: 'Young thief of {{Darujhistan}} who becomes the unwitting bearer of the {{Coin of Oponn}}.' },
+  { type: 'character', name: 'Adjunct Lorn', aka: ['Lorn', 'The Adjunct'], description: 'The Empress\'s Adjunct, hunter of rogue sorcery for the {{Malazan Empire}}. Carries an {{Otataral}} sword and seeks to free the {{Jaghut Tyrant}}.' },
+  { type: 'character', name: 'Anomander Rake', aka: ['Son of Darkness'], description: 'Son of Darkness, lord of the {{Tiste Andii}} and master of {{Moon\'s Spawn}}. Wields the sword {{Dragnipur}}.' },
+  { type: 'character', name: 'Crokus Younghand', aka: ['Crokus'], description: 'Young thief of {{Darujhistan}} who becomes the unwitting bearer of the {{Coin of Oponn}}.' },
   { type: 'character', name: 'Kruppe', description: 'Self-important, rotund dream-reader of the {{Phoenix Inn}} who speaks of himself in the third person. Much cleverer than he seems.' },
-  { type: 'character', name: 'Rallick Nom', description: 'Assassin of {{Darujhistan}} and friend of {{Crokus Younghand}}, plotting revenge for his friend {{Coll}}.' },
+  { type: 'character', name: 'Rallick Nom', aka: ['Rallick'], description: 'Assassin of {{Darujhistan}} and friend of {{Crokus Younghand}}, plotting revenge for his friend {{Coll}}.' },
   { type: 'character', name: 'Coll', description: 'Ruined noble of {{Darujhistan}}, betrayed by his wife; friend of {{Rallick Nom}}.' },
   { type: 'character', name: 'Baruk', description: 'High alchemist of {{Darujhistan}} and member of the {{T\'orrud Cabal}}, working quietly against the {{Malazan Empire}}.' },
-  { type: 'character', name: 'Tool', description: 'A {{T\'lan Imass}} who accompanies {{Adjunct Lorn}} on her mission to the {{Gadrobi Hills}}.' },
-  { type: 'character', name: 'Cotillion', description: 'The Rope, patron of assassins and companion of {{Shadowthrone}}. One of the new {{Ascendants}} who only recently took the {{House of Shadow}}. Rides {{Sorry}} as a vessel. The old Emperor had a master assassin too, {{Dancer}} — see {{Fate of Kellanved and Dancer}}.' },
+  { type: 'character', name: 'Tool', aka: ["Onos T'oolan"], description: 'A {{T\'lan Imass}} who accompanies {{Adjunct Lorn}} on her mission to the {{Gadrobi Hills}}.' },
+  { type: 'character', name: 'Cotillion', aka: ['The Rope'], description: 'The Rope, patron of assassins and companion of {{Shadowthrone}}. One of the new {{Ascendants}} who only recently took the {{House of Shadow}}. Rides {{Sorry}} as a vessel. The old Emperor had a master assassin too, {{Dancer}} — see {{Fate of Kellanved and Dancer}}.' },
   // Locations
   { type: 'location', name: 'Genabackis', description: 'Continent where the {{Malazan Empire}} wages its campaign. Home to {{Pale}} and {{Darujhistan}}.' },
   { type: 'location', name: 'Pale', description: 'Free City on {{Genabackis}}, protected by {{Moon\'s Spawn}} until the {{Siege of Pale}}.' },
-  { type: 'location', name: 'Darujhistan', description: 'The City of Blue Fire, lit by gas, and the last great Free City standing against the {{Malazan Empire}}.' },
+  { type: 'location', name: 'Darujhistan', aka: ['City of Blue Fire'], description: 'The City of Blue Fire, lit by gas, and the last great Free City standing against the {{Malazan Empire}}.' },
   { type: 'location', name: 'Moon\'s Spawn', description: 'A vast floating fortress of black basalt, home of {{Anomander Rake}} and the {{Tiste Andii}}.' },
   { type: 'location', name: 'Phoenix Inn', description: 'Tavern in {{Darujhistan}}, haunt of {{Kruppe}}, {{Rallick Nom}} and {{Crokus Younghand}}.' },
   { type: 'location', name: 'Gadrobi Hills', description: 'Hills outside {{Darujhistan}} where a {{Jaghut Tyrant}} lies imprisoned in a barrow.' },
@@ -55,10 +55,10 @@ const ENTRIES: Sample[] = [
   { type: 'magic', name: 'Deck of Dragons', description: 'Tarot-like deck used to read the movements of gods and Ascendants. {{Tattersail}} is a skilled reader.' },
   { type: 'magic', name: 'Otataral', description: 'Rust-coloured ore that negates sorcery. {{Adjunct Lorn}}\'s sword is made of it.' },
   // Religion
-  { type: 'religion', name: 'Oponn', description: 'The Twin Jesters of Chance, gods who play games with mortal lives — chiefly through {{Ganoes Paran}} and the {{Coin of Oponn}}.' },
+  { type: 'religion', name: 'Oponn', aka: ['Twin Jesters', 'Jesters of Chance'], description: 'The Twin Jesters of Chance, gods who play games with mortal lives — chiefly through {{Ganoes Paran}} and the {{Coin of Oponn}}.' },
   // Creatures
   { type: 'creature', name: 'Hounds of Shadow', description: 'Huge, terrifying hounds that serve the Shadow Realm and hunt at {{Cotillion}}\'s side.' },
-  { type: 'creature', name: 'Jaghut Tyrant', description: 'A {{Jaghut}} of immense power, imprisoned in the {{Gadrobi Hills}}. {{Adjunct Lorn}} and {{Tool}} plan to release him on {{Darujhistan}}.' },
+  { type: 'creature', name: 'Jaghut Tyrant', aka: ['Raest'], description: 'A {{Jaghut}} of immense power, imprisoned in the {{Gadrobi Hills}}. {{Adjunct Lorn}} and {{Tool}} plan to release him on {{Darujhistan}}.' },
   // Events
   { type: 'event', name: 'Siege of Pale', description: 'The {{Malazan Empire}} takes {{Pale}} and drives off {{Moon\'s Spawn}}, at a terrible cost to the {{Bridgeburners}} and the cadre mages.' },
   { type: 'event', name: 'Fête of Gedderone', description: 'Spring festival in {{Darujhistan}} where the city\'s plots — and {{Anomander Rake}}, {{Kalam}} and {{Rallick Nom}} — collide.' },
@@ -69,9 +69,9 @@ const ENTRIES: Sample[] = [
 
   // ——— Expanded Book 1 content ———
   // Malazan command and mages
-  { type: 'character', name: 'Empress Laseen', description: 'Ruler of the {{Malazan Empire}}. Once called Surly and head of the {{Claw}}, she took the throne by having {{Kellanved}} and {{Dancer}} killed. Trusts few, and is said to want the {{Bridgeburners}} gone.' },
-  { type: 'character', name: 'Dujek Onearm', description: 'High Fist of the Malazan armies on {{Genabackis}}, commanding {{Onearm\'s Host}}. An old soldier from the Emperor\'s day and a friend of {{Whiskeyjack}}.' },
-  { type: 'character', name: 'Tayschrenn', description: 'Imperial High Mage, loyal to {{Empress Laseen}}. Directs the sorcery at the {{Siege of Pale}}, where many of the Empire\'s own mages die. {{Tattersail}} distrusts him deeply.' },
+  { type: 'character', name: 'Empress Laseen', aka: ['Surly', 'The Empress'], description: 'Ruler of the {{Malazan Empire}}. Once called Surly and head of the {{Claw}}, she took the throne by having {{Kellanved}} and {{Dancer}} killed. Trusts few, and is said to want the {{Bridgeburners}} gone.' },
+  { type: 'character', name: 'Dujek Onearm', aka: ['High Fist', 'Onearm'], description: 'High Fist of the Malazan armies on {{Genabackis}}, commanding {{Onearm\'s Host}}. An old soldier from the Emperor\'s day and a friend of {{Whiskeyjack}}.' },
+  { type: 'character', name: 'Tayschrenn', aka: ['High Mage'], description: 'Imperial High Mage, loyal to {{Empress Laseen}}. Directs the sorcery at the {{Siege of Pale}}, where many of the Empire\'s own mages die. {{Tattersail}} distrusts him deeply.' },
   { type: 'character', name: 'Toc the Younger', description: 'Malazan scout and courier who loses an eye at the {{Siege of Pale}}. Rides with {{Adjunct Lorn}} and {{Tool}} toward the {{Gadrobi Hills}}.' },
   { type: 'character', name: 'Calot', description: 'Cadre mage and {{Tattersail}}\'s lover, killed at the {{Siege of Pale}}.' },
   { type: 'character', name: 'Nightchill', description: 'Powerful sorceress of the Second Army\'s mage cadre, cut down at the {{Siege of Pale}}. {{Bellurdan}} carries her body away to bury it.' },
@@ -91,10 +91,10 @@ const ENTRIES: Sample[] = [
   { type: 'character', name: 'Vorcan', description: 'Master of the {{Assassins\' Guild}} of {{Darujhistan}}, and a High Mage in her own right.' },
   { type: 'character', name: 'Derudan', description: 'Witch of Tennes and member of the {{T\'orrud Cabal}} alongside {{Baruk}}.' },
   // Elsewhere on Genabackis
-  { type: 'character', name: 'Caladan Brood', description: 'Warlord leading the armies that fight the {{Malazan Empire}} in the north of {{Genabackis}}. An ally of {{Anomander Rake}}, he carries a great hammer.' },
+  { type: 'character', name: 'Caladan Brood', aka: ['Brood', 'The Warlord'], description: 'Warlord leading the armies that fight the {{Malazan Empire}} in the north of {{Genabackis}}. An ally of {{Anomander Rake}}, he carries a great hammer.' },
   { type: 'character', name: 'Lady Envy', description: 'Mysterious, beautiful and dangerous sorceress who arrives in {{Darujhistan}} and knows {{Anomander Rake}} of old.' },
   { type: 'character', name: 'Shadowthrone', description: 'God who rules the {{House of Shadow}}, master of the {{Hounds of Shadow}} and partner of {{Cotillion}}. A new Ascendant, openly hostile to the {{Malazan Empire}} and to {{Empress Laseen}} in particular. See {{Fate of Kellanved and Dancer}}.' },
-  { type: 'character', name: 'Kellanved', description: "The first Emperor of the {{Malazan Empire}}, a mage who built it from {{Malaz City}}. Killed on {{Empress Laseen}}'s orders, or so the official story goes. See {{Fate of Kellanved and Dancer}}." },
+  { type: 'character', name: 'Kellanved', aka: ['The Emperor'], description: "The first Emperor of the {{Malazan Empire}}, a mage who built it from {{Malaz City}}. Killed on {{Empress Laseen}}'s orders, or so the official story goes. See {{Fate of Kellanved and Dancer}}." },
   { type: 'character', name: 'Dancer', description: "{{Kellanved}}'s companion and master assassin, killed alongside him on {{Empress Laseen}}'s orders. See {{Fate of Kellanved and Dancer}}." },
   // Places
   { type: 'location', name: 'Malaz City', description: 'Island port where the Empire began. As a boy, {{Ganoes Paran}} watches the {{Purge of the Mouse}} from the walls of Mock\'s Hold.' },
@@ -118,7 +118,7 @@ const ENTRIES: Sample[] = [
   // Magic
   { type: 'magic', name: 'Gas of Darujhistan', description: 'The natural gas piped under {{Darujhistan}} that fills the city with its famous blue light.' },
   // Religion
-  { type: 'religion', name: 'Gedderone', description: 'The Lady of Spring, celebrated in {{Darujhistan}} at the {{Fête of Gedderone}}.' },
+  { type: 'religion', name: 'Gedderone', aka: ['Lady of Spring'], description: 'The Lady of Spring, celebrated in {{Darujhistan}} at the {{Fête of Gedderone}}.' },
   // Lore
   { type: 'lore', name: 'Ascendants', description: 'Beings who have risen to godlike power, such as {{Anomander Rake}}. Gods and Ascendants move through the {{Deck of Dragons}} and use mortals as pieces, as {{Oponn}} does.' },
   { type: 'lore', name: 'Fate of Kellanved and Dancer', description: "Officially, {{Kellanved}} and {{Dancer}} were assassinated on {{Empress Laseen}}'s orders. But the book drops hints: the {{House of Shadow}} stood empty until recently, when {{Shadowthrone}} and {{Cotillion}} ascended to it; {{Cotillion}}, the Rope, is patron of assassins, just as {{Dancer}} was the Emperor's assassin; and {{Shadowthrone}} is openly hostile to the Empire and to Laseen. Book 1 never says outright that they are the same pair." },
@@ -334,7 +334,7 @@ export async function loadMalazanSample(): Promise<number> {
   for (const e of ENTRIES) {
     const typeId = typeIds.get(e.type);
     if (typeId === undefined) throw new Error(`Unknown type "${e.type}".`);
-    ids.set(e.name, await rpc('createEntity', { seriesId, typeId, name: e.name, firstBookId: book(e.book) }));
+    ids.set(e.name, await rpc('createEntity', { seriesId, typeId, name: e.name, firstBookId: book(e.book), aliases: e.aka }));
   }
 
   // Pass 2: write descriptions with real @-links.

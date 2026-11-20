@@ -66,6 +66,9 @@
   <div class="head" style:--c={entity.type.color}>
     <span class="badge"><Icon name={entity.type.icon} size={14} color={entity.type.color} /> {entity.type.name}</span>
     <h1>{entity.name}</h1>
+    {#if entity.aliases.length}
+      <p class="aka">Also known as {entity.aliases.join(' · ')}</p>
+    {/if}
     {#if entity.firstBook}
       <p class="muted">First appears in Book {entity.firstBook.number}: {entity.firstBook.title}</p>
     {/if}
