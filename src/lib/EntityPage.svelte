@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import type { EntityDetail, EntityListItem } from '../db/entities';
   import { href } from './route';
@@ -63,7 +64,7 @@
   />
 {:else if entity}
   <div class="head" style:--c={entity.type.color}>
-    <span class="badge">{entity.type.icon} {entity.type.name}</span>
+    <span class="badge"><Icon name={entity.type.icon} size={14} color={entity.type.color} /> {entity.type.name}</span>
     <h1>{entity.name}</h1>
     {#if entity.firstBook}
       <p class="muted">First appears in Book {entity.firstBook.number}: {entity.firstBook.title}</p>
@@ -117,7 +118,7 @@
     {:else}
       <ul class="list compact">
         {#each mentionedIn as m (m.id)}
-          <li><a href={href({ name: 'entity', seriesId, entityId: m.id })}>{m.icon} {m.name}</a> <small class="muted">{m.type_name}</small></li>
+          <li><a href={href({ name: 'entity', seriesId, entityId: m.id })}><Icon name={m.icon} size={14} color={m.color} /> {m.name}</a> <small class="muted">{m.type_name}</small></li>
         {/each}
       </ul>
     {/if}

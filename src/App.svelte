@@ -9,6 +9,7 @@
   import SearchOverlay from './lib/SearchOverlay.svelte';
   import { update, applyUpdate, dismissUpdate } from './lib/update.svelte';
   import { theme, toggleTheme } from './lib/theme.svelte';
+  import Icon from './lib/Icon.svelte';
 
   let info = $state<StartupInfo | null>(null);
   let error = $state<string | null>(null);
@@ -59,7 +60,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
       {/if}
     </button>
-    <button class="search" onclick={() => (searchOpen = true)} aria-label="Search (/ or Ctrl+K)" title="Search (/ or Ctrl+K)">🔍<span class="label"> Search</span></button>
+    <button class="search" onclick={() => (searchOpen = true)} aria-label="Search (/ or Ctrl+K)" title="Search (/ or Ctrl+K)"><Icon name="search" size={16} /><span class="label"> Search</span></button>
     <a href="#/" aria-current={route.name === 'library' ? 'page' : undefined}>Library</a>
     <a href="#/settings" aria-current={route.name === 'settings' ? 'page' : undefined}>Settings</a>
   </nav>
@@ -132,7 +133,7 @@
   nav { display: flex; gap: 1rem; align-items: center; }
   .mode { min-height: 36px; width: 36px; padding: 0; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
   .mode svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .search { min-height: 36px; padding: 0.2rem 0.7rem; font-size: 0.85rem; color: var(--muted); border-radius: 999px; }
+  .search { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 36px; padding: 0.2rem 0.7rem; font-size: 0.85rem; color: var(--muted); border-radius: 999px; }
   /* Phones have no room for the light/dark button; Settings → Appearance still has the choice. */
   @media (max-width: 420px) { .search .label, .mode { display: none; } nav { gap: 0.75rem; } }
   nav a { text-decoration: none; color: var(--muted); padding: 0.5rem 0; }

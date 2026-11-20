@@ -11,16 +11,16 @@ export interface DefaultEntityType {
 
 /** Seeded into every new series, in this display order. Only `event` is built in. */
 export const DEFAULT_ENTITY_TYPES: DefaultEntityType[] = [
-  { key: 'character', name: 'Character', icon: '👤', color: '#5b8def', is_builtin: 0 },
-  { key: 'location',  name: 'Location',  icon: '📍', color: '#3fa66b', is_builtin: 0 },
-  { key: 'event',     name: 'Event',     icon: '⚡', color: '#e0a030', is_builtin: 1 },
-  { key: 'people',    name: 'People',    icon: '👥', color: '#9a6fd6', is_builtin: 0 },
-  { key: 'faction',   name: 'Faction',   icon: '🛡️', color: '#d0584f', is_builtin: 0 },
-  { key: 'item',      name: 'Item',      icon: '🗝️', color: '#c9a227', is_builtin: 0 },
-  { key: 'magic',     name: 'Magic',     icon: '✨', color: '#4fb8c9', is_builtin: 0 },
-  { key: 'creature',  name: 'Creature',  icon: '🐉', color: '#7a9a3a', is_builtin: 0 },
-  { key: 'religion',  name: 'Religion',  icon: '🕯️', color: '#b5835a', is_builtin: 0 },
-  { key: 'lore',      name: 'Lore',      icon: '📜', color: '#8a8f99', is_builtin: 0 },
+  { key: 'character', name: 'Character', icon: 'user', color: '#5b8def', is_builtin: 0 },
+  { key: 'location',  name: 'Location',  icon: 'building-castle', color: '#3fa66b', is_builtin: 0 },
+  { key: 'event',     name: 'Event',     icon: 'swords', color: '#e0a030', is_builtin: 1 },
+  { key: 'people',    name: 'People',    icon: 'users-group', color: '#9a6fd6', is_builtin: 0 },
+  { key: 'faction',   name: 'Faction',   icon: 'shield', color: '#d0584f', is_builtin: 0 },
+  { key: 'item',      name: 'Item',      icon: 'diamond', color: '#c9a227', is_builtin: 0 },
+  { key: 'magic',     name: 'Magic',     icon: 'wand', color: '#4fb8c9', is_builtin: 0 },
+  { key: 'creature',  name: 'Creature',  icon: 'paw', color: '#7a9a3a', is_builtin: 0 },
+  { key: 'religion',  name: 'Religion',  icon: 'flame', color: '#b5835a', is_builtin: 0 },
+  { key: 'lore',      name: 'Lore',      icon: 'script', color: '#8a8f99', is_builtin: 0 },
 ];
 
 /** Default positions (in years on the master axis) for vague dates. Editable per series. */

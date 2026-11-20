@@ -3,6 +3,11 @@
   import { rpc } from '../db/client';
   import { FIELD_KINDS, slugify, type EntityTypeRow, type TypeInput } from '../db/entityTypes';
   import { attempt } from './forms';
+  import Icon from './Icon.svelte';
+  import { PICKER_ICONS, isIconName } from './icons';
+
+  /** 'users-group' → 'Users group', 'ghost-2' → 'Ghost'. */
+  const iconLabel = (n: string) => n.replace(/-\d+$/, '').replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -21,7 +26,7 @@
     editing = t ? t.id : 'new';
     draft = t
       ? { name: t.name, icon: t.icon, color: t.color, fields: t.fields.map((f) => ({ ...f })) }
-      : { name: '', icon: '', color: '#888888', fields: [] };
+      : { name: '', icon: 'star', color: '#888888', fields: [] };
   }
 
   async function save(ev: SubmitEvent) {
@@ -58,7 +63,7 @@
         {@render editor(t)}
       {:else}
         <div class="type-row">
-          <span class="swatch" style:background={t.color}>{t.icon}</span>
+          <span class="swatch" style:background={t.color}><Icon name={t.icon} size={20} color="var(--bg)" /></span>
           <div class="grow">
             <strong>{t.name}</strong> <code class="muted">@{t.key}:</code>
             <small class="muted">
@@ -81,10 +86,22 @@
 {#snippet editor(t: EntityTypeRow | null)}
   <form class="stack" onsubmit={save}>
     <div class="row">
-      <label class="icon-in">Icon <input bind:value={draft.icon} maxlength="4" placeholder="⛵" /></label>
       <label class="grow">Name <input bind:value={draft.name} required /></label>
       <label>Color <input type="color" bind:value={draft.color} /></label>
     </div>
+    <fieldset class="icons">
+      <legend>Icon</legend>
+      <div class="icon-grid" role="radiogroup" aria-label="Icon">
+        {#each PICKER_ICONS as n (n)}
+          <button type="button" role="radio" aria-checked={draft.icon === n} aria-label={iconLabel(n)} title={iconLabel(n)} onclick={() => (draft.icon = n)}>
+            <Icon name={n} size={20} color={draft.color} />
+          </button>
+        {/each}
+      </div>
+      <label class="emoji-in">Or use an emoji
+        <input value={isIconName(draft.icon) ? '' : draft.icon} maxlength="4" placeholder="⛵" oninput={(e) => (draft.icon = e.currentTarget.value || 'star')} />
+      </label>
+    </fieldset>
     <fieldset>
       <legend>Extra fields</legend>
       {#each draft.fields as f, i (i)}
@@ -116,7 +133,13 @@
     width: 2.25rem; height: 2.25rem; border-radius: 8px; display: grid; place-items: center; flex: none;
     font-size: 1.1rem;
   }
-  .icon-in { width: 5rem; }
+  .icons { gap: 0.75rem; }
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; }
+  .icon-grid button { min-height: 40px; padding: 0; display: grid; place-items: center; background: none; box-shadow: none; }
+  .icon-grid button:hover { box-shadow: var(--raised-sm); }
+  .icon-grid button[aria-checked='true'] { box-shadow: var(--pressed); }
+  .emoji-in { display: flex !important; align-items: center; gap: 0.6rem; font-size: 0.9rem; color: var(--muted); }
+  .emoji-in input { width: 5rem; }
   fieldset { border: 1px solid var(--border); border-radius: var(--radius); display: grid; gap: 0.5rem; }
   .push { margin-left: auto; }
   input[type='color'] { padding: 0.15rem; height: 44px; width: 3.5rem; }

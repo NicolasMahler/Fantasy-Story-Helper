@@ -5,11 +5,24 @@ import schemaV1 from './schema.sql?raw';
 const appMeta = 'CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;';
 
 /**
+ * v3: built-in types switch from emoji to named line icons (src/lib/icons.ts). Only types still showing
+ * the emoji they were seeded with change, so icons people picked themselves are kept.
+ */
+export const LINE_ICONS_SQL = [
+  ['character', '👤', 'user'], ['location', '📍', 'building-castle'], ['event', '⚡', 'swords'],
+  ['people', '👥', 'users-group'], ['faction', '🛡️', 'shield'], ['item', '🗝️', 'diamond'],
+  ['magic', '✨', 'wand'], ['creature', '🐉', 'paw'], ['religion', '🕯️', 'flame'], ['lore', '📜', 'script'],
+]
+  .map(([key, emoji, icon]) => `UPDATE entity_type SET icon = '${icon}' WHERE key = '${key}' AND icon = '${emoji}';`)
+  .join('\n');
+
+/**
  * Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one.
  *   v1: schema.sql (initial schema)
  *   v2: app_meta
+ *   v3: line icons for built-in types
  */
-export const MIGRATIONS: string[] = [schemaV1, appMeta];
+export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL];
 
 export function currentVersion(db: SqlDb): number {
   return db.query<{ user_version: number }>('PRAGMA user_version')[0].user_version;

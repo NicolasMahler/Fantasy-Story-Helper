@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import type { EntityListItem } from '../db/entities';
   import { listKey } from './forms';
@@ -73,7 +74,7 @@
       {#each results as r, i (r.id)}
         <li role="option" aria-selected={i === active}>
           <button type="button" tabindex="-1" onmousedown={(e) => e.preventDefault()} onclick={() => pick(r)}>
-            <span aria-hidden="true">{r.icon}</span> {r.name} <small class="muted">{r.type_name}</small>
+            <Icon name={r.icon} size={15} color={r.color} /> {r.name} <small class="muted">{r.type_name}</small>
           </button>
         </li>
       {:else}

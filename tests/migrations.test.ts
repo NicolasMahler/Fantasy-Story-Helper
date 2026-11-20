@@ -35,6 +35,20 @@ describe('migrate', () => {
     expect(objects(db, 'table')).toEqual([]);
   });
 
+  it('v3 swaps seeded emoji for line icons but keeps icons people chose', () => {
+    const db = openNodeDb();
+    migrate(db, MIGRATIONS.slice(0, 2));
+    db.exec(`INSERT INTO series (id, name) VALUES (1, 'Old series')`);
+    db.exec(`INSERT INTO entity_type (series_id, key, name, icon) VALUES
+      (1, 'character', 'Character', '👤'), (1, 'faction', 'Faction', '🛡️'),
+      (1, 'creature', 'Creature', '🦄'), (1, 'ship', 'Ship', '⛵')`);
+    migrate(db);
+    const icons = Object.fromEntries(
+      db.query<{ key: string; icon: string }>('SELECT key, icon FROM entity_type').map((r) => [r.key, r.icon]),
+    );
+    expect(icons).toEqual({ character: 'user', faction: 'shield', creature: '🦄', ship: '⛵' });
+  });
+
   it('refuses a db from a newer app version', () => {
     const db = openNodeDb();
     db.exec(`PRAGMA user_version = ${MIGRATIONS.length + 5}`);

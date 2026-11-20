@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { rpc } from '../db/client';
   import type { EntityListItem } from '../db/entities';
   import type { EntityTypeRow } from '../db/entityTypes';
@@ -35,7 +36,7 @@
   <button class="chip" aria-pressed={typeId === null} onclick={() => (typeId = null)}>All</button>
   {#each types as t (t.id)}
     <button class="chip" aria-pressed={typeId === t.id} onclick={() => (typeId = typeId === t.id ? null : t.id)}>
-      {t.icon} {t.name} <small>{t.usage}</small>
+      <Icon name={t.icon} size={15} color={t.color} /> {t.name} <small>{t.usage}</small>
     </button>
   {/each}
 </div>
@@ -50,7 +51,7 @@
       <li in:rise={{ index: i }}>
         <a class="entry" href={href({ name: 'entity', seriesId, entityId: e.id })}>
           <span class="dot" style:background={e.color} aria-hidden="true"></span>
-          <span class="icon" aria-hidden="true">{e.icon}</span>
+          <span class="icon"><Icon name={e.icon} size={17} color={e.color} /></span>
           <span class="name">{e.name}</span>
           <small class="muted">{e.type_name}{e.first_book_number ? ` · Book ${e.first_book_number}` : ''}</small>
         </a>

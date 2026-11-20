@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { openNodeDb } from './helpers/nodeDb';
 import { setup } from './helpers/fixture';
-import { migrate } from '../src/db/migrations';
+import { migrate, MIGRATIONS } from '../src/db/migrations';
 import { createSeries } from '../src/db/seed';
 import { createEntity, getEntity, backlinks } from '../src/db/entities';
 import { addBook } from '../src/db/books';
@@ -43,11 +43,27 @@ const byName = (db: SqlDb, name: string, seriesId?: number) =>
 describe('validateDump', () => {
   it('accepts a real dump and rejects junk or newer versions', () => {
     const { db } = setup();
-    expect(() => validateDump(dumpJson(db), 2)).not.toThrow();
-    expect(() => validateDump({ hello: 1 }, 2)).toThrow(/not a Fantasy Helper/i);
-    expect(() => validateDump('nope', 2)).toThrow(/not a Fantasy Helper/i);
-    expect(() => validateDump({ ...dumpJson(db), schemaVersion: 99 }, 2)).toThrow(/newer/i);
-    expect(() => validateDump({ ...dumpJson(db), tables: { series: 'x' } }, 2)).toThrow(/damaged/i);
+    expect(() => validateDump(dumpJson(db), MIGRATIONS.length)).not.toThrow();
+    expect(() => validateDump({ hello: 1 }, MIGRATIONS.length)).toThrow(/not a Fantasy Helper/i);
+    expect(() => validateDump('nope', MIGRATIONS.length)).toThrow(/not a Fantasy Helper/i);
+    expect(() => validateDump({ ...dumpJson(db), schemaVersion: 99 }, MIGRATIONS.length)).toThrow(/newer/i);
+    expect(() => validateDump({ ...dumpJson(db), tables: { series: 'x' } }, MIGRATIONS.length)).toThrow(/damaged/i);
+  });
+});
+
+describe('importJson: older exports', () => {
+  it('gives untouched built-in types from a pre-v3 export the line icons', () => {
+    const { db } = setup();
+    const dump = JSON.parse(JSON.stringify(dumpJson(db)));
+    dump.schemaVersion = 2;
+    const old: Record<string, string> = { character: '👤', faction: '🛡️', lore: '🧙' };
+    for (const row of dump.tables.entity_type) if (row.key in old) row.icon = old[row.key];
+    importJson(db, dump, 'replace');
+    const icons = Object.fromEntries(
+      db.query<{ key: string; icon: string }>(`SELECT key, icon FROM entity_type WHERE key IN ('character', 'faction', 'lore')`)
+        .map((r) => [r.key, r.icon]),
+    );
+    expect(icons).toEqual({ character: 'user', faction: 'shield', lore: '🧙' });
   });
 });
 
