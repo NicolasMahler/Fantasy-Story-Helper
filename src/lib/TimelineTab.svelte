@@ -134,6 +134,11 @@
   .seg button { position: relative; border: none; background: none; box-shadow: none; border-radius: 999px; min-height: 34px; padding: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); }
   .seg button[aria-selected='true'] { color: var(--accent-text); font-weight: 600; }
   .seg button:active { transform: none; box-shadow: none; }
+  /* Phones: tighter labels so all three views fit on one line. */
+  @media (max-width: 420px) {
+    .seg { gap: 2px; padding: 4px; }
+    .seg button { padding: 0.25rem 0.75rem; font-size: 0.82rem; min-height: 34px; }
+  }
   /* The amber pill glides between options (see slideIndicator). */
   .slide-indicator {
     position: absolute; border-radius: 999px; background: var(--accent); box-shadow: var(--raised-sm);
