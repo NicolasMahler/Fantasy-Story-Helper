@@ -75,8 +75,6 @@
   .dot { width: 4px; align-self: stretch; border-radius: 2px; }
   .name { flex: 1; min-width: 0; font-weight: 500; }
   .aka { font-weight: 400; margin-left: 0.25rem; }
-  .why {
-    display: block; font-weight: 400; color: var(--muted);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
+  /* The excerpt wraps under the name; long words break rather than widen the page. */
+  .why { display: block; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; margin-top: 0.1rem; }
 </style>
