@@ -97,7 +97,7 @@ export function deleteType(db: SqlDb, id: number): void {
     [id, id],
   );
   if (!t) return;
-  if (t.is_builtin) throw new Error('The built-in Event type cannot be deleted.');
+  if (t.is_builtin) throw new Error('Built-in types (Event, Theory) cannot be deleted.');
   if (t.usage > 0) throw new Error(`This type is in use by ${plural(t.usage, 'entry', 'entries')}.`);
   db.exec('DELETE FROM entity_type WHERE id = ?', [id]);
 }

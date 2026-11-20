@@ -9,7 +9,7 @@ export interface DefaultEntityType {
   is_builtin: 0 | 1;
 }
 
-/** Seeded into every new series, in this display order. Only `event` is built in. */
+/** Seeded into every new series, in this display order. `event` and `theory` are built in. */
 export const DEFAULT_ENTITY_TYPES: DefaultEntityType[] = [
   { key: 'character', name: 'Character', icon: 'user', color: '#5b8def', is_builtin: 0 },
   { key: 'location',  name: 'Location',  icon: 'building-castle', color: '#3fa66b', is_builtin: 0 },
@@ -21,6 +21,7 @@ export const DEFAULT_ENTITY_TYPES: DefaultEntityType[] = [
   { key: 'creature',  name: 'Creature',  icon: 'paw', color: '#7a9a3a', is_builtin: 0 },
   { key: 'religion',  name: 'Religion',  icon: 'flame', color: '#b5835a', is_builtin: 0 },
   { key: 'lore',      name: 'Lore',      icon: 'script', color: '#8a8f99', is_builtin: 0 },
+  { key: 'theory',    name: 'Theory',    icon: 'bulb', color: '#c46f9b', is_builtin: 1 },
 ];
 
 /** Default positions (in years on the master axis) for vague dates. Editable per series. */

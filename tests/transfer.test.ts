@@ -8,6 +8,7 @@ import { addBook } from '../src/db/books';
 import { createAge } from '../src/db/calendar';
 import { saveEvent, addParticipant, getEventDetail, type EventInput } from '../src/db/events';
 import { createLink, listLinks } from '../src/db/links';
+import { saveTheory, getTheoryDetail } from '../src/db/theories';
 import { dumpJson } from '../src/db/dump';
 import { validateDump, importJson } from '../src/db/transfer';
 import { getMeta, recordExport } from '../src/db/meta';
@@ -31,6 +32,8 @@ function populate(db: SqlDb, seriesId: number, typeId: (k: string) => number) {
   saveEvent(db, peace, { ...base, mode: 'recounted', toldById: bard, datePrecision: 'relative', relativeTo: war, offsetYears: 10 });
   addParticipant(db, war, hero, 'leader');
   createLink(db, { fromId: hero, toId: bard, kind: 'friends', startEventId: war });
+  const guess = createEntity(db, { seriesId, typeId: typeId('theory'), name: 'Bard is a spy' });
+  saveTheory(db, guess, { kind: 'theory', status: 'confirmed', resolvedBookId: book, resolution: 'He confesses.' });
 }
 
 const count = (db: SqlDb, t: string) => db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ${t}`)[0].n;
@@ -60,6 +63,16 @@ describe('importJson: older exports', () => {
     for (const row of dump.tables.entity) delete row.aliases;
     importJson(db, dump, 'replace');
     expect(getEntity(db, byName(db, 'Hero'))!.aliases).toEqual([]);
+  });
+
+  it('gives every series from a pre-v5 export the Theory type', () => {
+    const { db } = setup();
+    const dump = JSON.parse(JSON.stringify(dumpJson(db)));
+    dump.schemaVersion = 4;
+    delete dump.tables.theory;
+    dump.tables.entity_type = dump.tables.entity_type.filter((t: { key: string }) => t.key !== 'theory');
+    importJson(db, dump, 'replace');
+    expect(db.query(`SELECT name, is_builtin FROM entity_type WHERE key = 'theory'`)).toEqual([{ name: 'Theory', is_builtin: 1 }]);
   });
 
   it('gives untouched built-in types from a pre-v3 export the line icons', () => {
@@ -122,7 +135,7 @@ describe('importJson: add', () => {
     const copy = seriesIds[0];
     expect(copy).not.toBe(seriesId);
     expect(db.query('SELECT name FROM series ORDER BY id')).toEqual([{ name: 'Saga' }, { name: 'Saga (imported)' }]);
-    expect(count(db, 'entity')).toBe(2 * 5);
+    expect(count(db, 'entity')).toBe(2 * 6);
 
     const hero = byName(db, 'Hero', copy);
     const war = byName(db, 'War', copy);
@@ -138,6 +151,9 @@ describe('importJson: add', () => {
     });
     expect(getEventDetail(db, war)!.participants.map((p) => [p.entityId, p.role])).toEqual([[hero, 'leader']]);
     expect(listLinks(db, hero)).toMatchObject([{ kind: 'friends', other: { name: 'Bard' }, startEvent: { id: war } }]);
+    const guess = getTheoryDetail(db, byName(db, 'Bard is a spy', copy))!;
+    expect(guess).toMatchObject({ status: 'confirmed', resolution: 'He confesses.', resolvedBook: { title: 'One' } });
+    expect(guess.resolvedBook!.id).toBe(getEntity(db, hero)!.firstBook!.id);
   });
 
   it('numbers repeated imports and leaves the original untouched', () => {

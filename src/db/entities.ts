@@ -3,6 +3,7 @@ import { insertId, likeEscape } from './sql';
 import type { FieldDef } from './entityTypes';
 import { parseMentionIds, stripMentions } from './mentions';
 import { freezeDependents, recomputeSeries } from './events';
+import type { TheoryKind, TheoryStatus } from './theories';
 
 export type Attributes = Record<string, string | number>;
 
@@ -50,6 +51,9 @@ export interface EntityListItem {
   icon: string;
   color: string;
   first_book_number: number | null;
+  /** For theories: whether it's a theory or a question, and where it stands. Null for other entries. */
+  theory_kind: TheoryKind | null;
+  theory_status: TheoryStatus | null;
   /** Set by searches when the entry matched on one of its other names rather than its name. */
   alias?: string;
   /** Set by the entries search when only the description matched: the text around the match. */
@@ -57,8 +61,10 @@ export interface EntityListItem {
 }
 
 const LIST_SELECT = `
-  SELECT e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color, b.number AS first_book_number
-  FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id`;
+  SELECT e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color, th.kind AS theory_kind, th.status AS theory_status,
+         b.number AS first_book_number
+  FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id
+  LEFT JOIN theory th ON th.entity_id = e.id`;
 
 function cleanName(name: string): string {
   const n = name.trim();
@@ -112,6 +118,7 @@ export function createEntity(db: SqlDb, input: EntityInput): number {
     );
     const id = insertId(db);
     if (key === 'event') db.exec('INSERT INTO event (entity_id) VALUES (?)', [id]); // rule 2
+    if (key === 'theory') db.exec('INSERT INTO theory (entity_id) VALUES (?)', [id]);
     rebuildMentions(db, id, input.seriesId, description);
     return id;
   });
@@ -141,8 +148,10 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
     // Sort keys only depend on event rows, so only an Event ↔ non-Event retype can change them.
     let eventsChanged = false;
     if (patch.typeId !== undefined && patch.typeId !== cur.type_id) {
-      const wasEvent = typeKey(db, cur.series_id, cur.type_id) === 'event';
-      const isEvent = typeKey(db, cur.series_id, patch.typeId) === 'event';
+      const fromKey = typeKey(db, cur.series_id, cur.type_id);
+      const toKey = typeKey(db, cur.series_id, patch.typeId);
+      const wasEvent = fromKey === 'event';
+      const isEvent = toKey === 'event';
       set('type_id', patch.typeId);
       if (isEvent && !wasEvent) db.exec('INSERT OR IGNORE INTO event (entity_id) VALUES (?)', [id]);
       if (wasEvent && !isEvent) {
@@ -150,6 +159,8 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
         db.exec('DELETE FROM event WHERE entity_id = ?', [id]);
       }
       eventsChanged = wasEvent !== isEvent;
+      if (toKey === 'theory') db.exec('INSERT OR IGNORE INTO theory (entity_id) VALUES (?)', [id]);
+      if (fromKey === 'theory' && toKey !== 'theory') db.exec('DELETE FROM theory WHERE entity_id = ?', [id]);
     }
     sets.push(`updated_at = datetime('now')`);
     db.exec(`UPDATE entity SET ${sets.join(', ')} WHERE id = ?`, [...params, id]);
@@ -259,14 +270,22 @@ function excerpt(description: string, term: string): string | undefined {
 
 /**
  * Entries of a series, optionally of one type. With `search`, entries match on their name, another name
- * (alias) or their description, in that order of preference.
+ * (alias) or their description, in that order of preference. `theoryStatus` keeps only theories with that status.
  */
-export function listEntities(db: SqlDb, seriesId: number, filter: { typeId?: number | null; search?: string } = {}): EntityListItem[] {
+export function listEntities(
+  db: SqlDb,
+  seriesId: number,
+  filter: { typeId?: number | null; search?: string; theoryStatus?: TheoryStatus | null } = {},
+): EntityListItem[] {
   const where = ['e.series_id = ?'];
   const params: unknown[] = [seriesId];
   if (filter.typeId) {
     where.push('e.type_id = ?');
     params.push(filter.typeId);
+  }
+  if (filter.theoryStatus) {
+    where.push('th.status = ?');
+    params.push(filter.theoryStatus);
   }
   const term = filter.search?.trim();
   if (!term) return db.query<EntityListItem>(`${LIST_SELECT} WHERE ${where.join(' AND ')} ORDER BY e.name COLLATE NOCASE`, params);

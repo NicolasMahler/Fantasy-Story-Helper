@@ -1,7 +1,7 @@
 /** JSON import: replace everything, or add the file's series alongside existing data. */
 import type { SqlDb } from './types';
 import { insertId } from './sql';
-import { currentVersion, LINE_ICONS_SQL } from './migrations';
+import { currentVersion, LINE_ICONS_SQL, THEORY_TYPE_SQL } from './migrations';
 import { DATA_TABLES, type DataTable, type JsonDump } from './dump';
 import { recomputeSeries } from './events';
 import { MENTION_RE } from './mentions';
@@ -141,6 +141,12 @@ function importAdd(db: SqlDb, dump: JsonDump): ImportResult {
     insert(db, 'event', row, evCols);
   }
 
+  const thCols = columnsOf(db, 'theory');
+  for (const r of rowsOf(dump, 'theory')) {
+    const id = m(maps.entity, r.entity_id);
+    if (id !== null) insert(db, 'theory', { ...r, entity_id: id, resolved_book_id: m(maps.book, r.resolved_book_id) }, thCols);
+  }
+
   const pCols = columnsOf(db, 'event_participant');
   for (const r of rowsOf(dump, 'event_participant')) {
     const ev = m(maps.entity, r.event_id), en = m(maps.entity, r.entity_id);
@@ -173,6 +179,8 @@ export function importJson(db: SqlDb, raw: unknown, mode: ImportMode): ImportRes
     const result = mode === 'replace' ? importReplace(db, dump) : importAdd(db, dump);
     // Exports from before v3 carry the old emoji; give their untouched built-in types the line icons too.
     if ((dump.schemaVersion ?? 0) < 3) db.exec(LINE_ICONS_SQL);
+    // Exports from before v5 have no Theory type; give every series one, as the migration does.
+    if ((dump.schemaVersion ?? 0) < 5) db.exec(THEORY_TYPE_SQL);
     return result;
   });
 }

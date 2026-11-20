@@ -60,6 +60,8 @@
     if (typeId === null) return;
     if (entity?.type.key === 'event' && type?.key !== 'event'
       && !confirm('Changing this away from Event removes its event details (date, participants). Continue?')) return;
+    if (entity?.type.key === 'theory' && type?.key !== 'theory'
+      && !confirm('Changing this away from Theory removes its status and how it was settled. Continue?')) return;
     busy = true;
     error = null;
     // Only keep values for fields the chosen type defines, and store numbers as numbers.

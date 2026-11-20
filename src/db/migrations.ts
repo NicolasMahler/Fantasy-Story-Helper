@@ -19,14 +19,42 @@ export const LINE_ICONS_SQL = [
 /** v4: other names an entry goes by ("Surly" for Laseen), as a JSON array of strings. */
 const aliases = `ALTER TABLE entity ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(aliases));`;
 
+/** v5: theories and open questions, a built-in entry type with a status (1:1 extension of entity, like event). */
+const theoryTable = `
+CREATE TABLE theory (
+  entity_id        INTEGER PRIMARY KEY REFERENCES entity(id) ON DELETE CASCADE,
+  kind             TEXT NOT NULL DEFAULT 'theory' CHECK (kind IN ('theory', 'question')),
+  status           TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'confirmed', 'wrong', 'answered')),
+  resolved_book_id INTEGER REFERENCES book(id) ON DELETE SET NULL,  -- where it was settled
+  resolution       TEXT NOT NULL DEFAULT '',                        -- how it was settled
+  CHECK (kind = 'theory' OR status IN ('open', 'answered')),
+  CHECK (kind = 'question' OR status <> 'answered')
+);
+CREATE INDEX idx_theory_book ON theory(resolved_book_id);`;
+
+/**
+ * Gives every series the built-in Theory type (last in the list) and every Theory entry its theory row.
+ * Safe to run again: also used after JSON imports from before v5. A custom type already keyed `theory`
+ * becomes the built-in one.
+ */
+export const THEORY_TYPE_SQL = `
+UPDATE entity_type SET is_builtin = 1 WHERE key = 'theory';
+INSERT INTO entity_type (series_id, key, name, icon, color, is_builtin, sort_order)
+  SELECT s.id, 'theory', 'Theory', 'bulb', '#c46f9b', 1,
+         (SELECT COALESCE(MAX(t.sort_order), -1) + 1 FROM entity_type t WHERE t.series_id = s.id)
+  FROM series s WHERE NOT EXISTS (SELECT 1 FROM entity_type t WHERE t.series_id = s.id AND t.key = 'theory');
+INSERT OR IGNORE INTO theory (entity_id)
+  SELECT e.id FROM entity e JOIN entity_type t ON t.id = e.type_id WHERE t.key = 'theory';`;
+
 /**
  * Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one.
  *   v1: schema.sql (initial schema)
  *   v2: app_meta
  *   v3: line icons for built-in types
  *   v4: entity.aliases
+ *   v5: theory table and the built-in Theory type
  */
-export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL, aliases];
+export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL, aliases, theoryTable + THEORY_TYPE_SQL];
 
 export function currentVersion(db: SqlDb): number {
   return db.query<{ user_version: number }>('PRAGMA user_version')[0].user_version;

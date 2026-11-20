@@ -6,6 +6,7 @@
   import RichText from './RichText.svelte';
   import EntityForm from './EntityForm.svelte';
   import EventPanel from './EventPanel.svelte';
+  import TheoryPanel from './TheoryPanel.svelte';
   import Relationships from './Relationships.svelte';
   import type { EntityEvent } from '../db/events';
   import { attempt } from './forms';
@@ -100,6 +101,10 @@
 
   {#if entity.type.key === 'event'}
     {#key version}<EventPanel {seriesId} eventId={entityId} />{/key}
+  {/if}
+
+  {#if entity.type.key === 'theory'}
+    {#key version}<TheoryPanel {seriesId} theoryId={entityId} />{/key}
   {/if}
 
   {#if events.length}

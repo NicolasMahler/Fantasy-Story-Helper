@@ -135,6 +135,13 @@ const ENTRIES: Sample[] = [
   { type: 'event', name: 'Simtal\'s Party', description: 'The masked party at the {{Simtal Estate}} on the night of the {{Fête of Gedderone}}. {{Rallick Nom}} strikes at {{Turban Orr}}, and {{Coll}} is given back his name and estate.' },
   { type: 'event', name: 'Outlawing of Onearm\'s Host', description: 'At the end of the book {{Dujek Onearm}} and his army are declared outlaws by the {{Malazan Empire}}.' },
   { type: 'event', name: 'Birth of Silverfox', description: 'A {{Rhivi}} child is born carrying the soul of {{Tattersail}}: {{Silverfox}}.' },
+
+  // Theories and questions (step 7): what a first-time reader wonders while reading Book 1.
+  { type: 'theory', name: 'Shadowthrone and Cotillion are Kellanved and Dancer', description: 'The {{House of Shadow}} stood empty until {{Shadowthrone}} and {{Cotillion}} took it, not long after {{Kellanved}} and {{Dancer}} were killed. Cotillion is patron of assassins, as Dancer was the Emperor\'s assassin, and Shadowthrone hates {{Empress Laseen}}. See {{Fate of Kellanved and Dancer}}.' },
+  { type: 'theory', name: 'Who is Sorry, really?', description: '{{Sorry}} is far too cold and too deadly for a new recruit, and {{Whiskeyjack}}\'s squad is afraid of her.' },
+  { type: 'theory', name: 'Kruppe is just a harmless windbag', description: '{{Kruppe}} talks about himself in the third person and seems to do little but eat and gossip at the {{Phoenix Inn}}.' },
+  { type: 'theory', name: 'Lorn means to free the Jaghut Tyrant', description: '{{Adjunct Lorn}} and {{Tool}} head for the {{Gadrobi Hills}}, where a {{Jaghut Tyrant}} lies in a barrow, close to {{Darujhistan}}.' },
+  { type: 'theory', name: 'Why does Laseen want the Bridgeburners gone?', description: '{{Empress Laseen}} keeps sending the {{Bridgeburners}} where they are likely to die, as at the {{Siege of Pale}}. Is it because they are {{Old Guard}}?' },
 ];
 
 /**
@@ -155,6 +162,15 @@ type EventSample = {
     | { relative: string; offset: number }
     | null;
   participants: [name: string, role?: string][];
+};
+
+/** Theory and question details, by entry name (all settled in Book 1 or still open). */
+const THEORIES: Record<string, { kind: 'theory' | 'question'; status: 'open' | 'confirmed' | 'wrong' | 'answered'; resolution?: string }> = {
+  'Shadowthrone and Cotillion are Kellanved and Dancer': { kind: 'theory', status: 'open' },
+  'Who is Sorry, really?': { kind: 'question', status: 'answered', resolution: 'A fisher girl possessed by Cotillion, the Rope, who uses her as his vessel.' },
+  'Kruppe is just a harmless windbag': { kind: 'theory', status: 'wrong', resolution: 'He works for Baruk and quietly steers much of what happens in Darujhistan, while pretending to bumble.' },
+  'Lorn means to free the Jaghut Tyrant': { kind: 'theory', status: 'confirmed', resolution: 'She and Tool open the barrow and free him to set him loose on Darujhistan.' },
+  'Why does Laseen want the Bridgeburners gone?': { kind: 'question', status: 'open' },
 };
 
 const AGES = [{ name: 'Burn\'s Sleep', startYear: 0, endYear: null, direction: 'forward' as const }];
@@ -390,5 +406,12 @@ async function fill(seriesId: number): Promise<void> {
   // Pass 4 (step 5): relationships.
   for (const [from, kind, to, note] of LINKS) {
     await rpc('createLink', { fromId: id(from), toId: id(to), kind, note });
+  }
+
+  // Pass 5 (step 7): theories and questions.
+  for (const [name, t] of Object.entries(THEORIES)) {
+    await rpc('saveTheory', id(name), {
+      kind: t.kind, status: t.status, resolvedBookId: t.status === 'open' ? null : book(), resolution: t.resolution ?? '',
+    });
   }
 }

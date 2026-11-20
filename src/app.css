@@ -12,6 +12,7 @@
   --accent: #9a5c1a;
   --accent-text: #ffffff;
   --danger: #b3362f;
+  --ok: #2f7d4f;
   --warn-bg: #eef2d9;
   --warn-text: #4a5216;
   --radius: 12px;
@@ -40,6 +41,7 @@
   --accent: #e3a95b;
   --accent-text: #1a1209;
   --danger: #f08a80;
+  --ok: #7fcf98;
   --warn-bg: #2c3317;
   --warn-text: #d9e3a6;
 }

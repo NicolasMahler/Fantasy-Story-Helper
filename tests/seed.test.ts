@@ -24,12 +24,12 @@ describe('createSeries', () => {
       .map((r) => r.key);
     expect(keys).toEqual([
       'character', 'location', 'event', 'people', 'faction',
-      'item', 'magic', 'creature', 'religion', 'lore',
+      'item', 'magic', 'creature', 'religion', 'lore', 'theory',
     ]);
-    expect(DEFAULT_ENTITY_TYPES).toHaveLength(10);
+    expect(DEFAULT_ENTITY_TYPES).toHaveLength(11);
     expect(
-      db.query('SELECT key FROM entity_type WHERE series_id = ? AND is_builtin = 1', [id]),
-    ).toEqual([{ key: 'event' }]);
+      db.query('SELECT key FROM entity_type WHERE series_id = ? AND is_builtin = 1 ORDER BY sort_order', [id]),
+    ).toEqual([{ key: 'event' }, { key: 'theory' }]);
     expect(
       db.query('SELECT bucket, sort_key FROM bucket_default WHERE series_id = ? ORDER BY sort_key', [id]),
     ).toEqual([
@@ -46,7 +46,7 @@ describe('createSeries', () => {
     const a = createSeries(db, { name: 'A' });
     const b = createSeries(db, { name: 'B' });
     expect(a).not.toBe(b);
-    expect(count('SELECT COUNT(*) AS n FROM entity_type')).toBe(20);
+    expect(count('SELECT COUNT(*) AS n FROM entity_type')).toBe(22);
   });
 
   it('rejects a blank name', () => {
