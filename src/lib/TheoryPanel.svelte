@@ -128,6 +128,9 @@
   .dot.s-open { border: 2px solid var(--accent); }
   .dot.s-confirmed, .dot.s-answered { background: var(--ok); }
   .dot.s-wrong { background: var(--danger); }
+  /* On a highlighted chip the accent fill would hide the open ring, so dots take the chip's text colour. */
+  .chip[aria-pressed='true'] .dot.s-open { border-color: currentColor; }
+  .chip[aria-pressed='true'] .dot:not(.s-open) { box-shadow: 0 0 0 1.5px currentColor; }
   .status.s-open { color: var(--accent); }
   .status.s-confirmed, .status.s-answered { color: var(--ok); }
   .status.s-wrong { color: var(--danger); }
