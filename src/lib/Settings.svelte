@@ -7,6 +7,13 @@
   import { timeAgo } from './timeAgo';
   import { attempt } from './forms';
   import { slugify } from './text';
+  import { theme, setTheme, type ThemePref } from './theme.svelte';
+
+  const themeOptions: { value: ThemePref; label: string; hint?: string }[] = [
+    { value: 'system', label: 'System', hint: 'match this device’s light or dark setting' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ];
 
   let { info = $bindable() }: { info: StartupInfo } = $props();
 
@@ -99,6 +106,19 @@
 <h1>Settings</h1>
 
 <section class="card">
+  <h2>Appearance</h2>
+  <fieldset class="modes">
+    <legend class="muted small">Theme</legend>
+    {#each themeOptions as o (o.value)}
+      <label>
+        <input type="radio" name="theme" value={o.value} checked={theme.pref === o.value} onchange={() => setTheme(o.value)} />
+        <span><strong>{o.label}</strong>{#if o.hint}<span class="muted">: {o.hint}</span>{/if}</span>
+      </label>
+    {/each}
+  </fieldset>
+</section>
+
+<section class="card">
   <h2>Storage</h2>
   <dl>
     <dt>Where data lives</dt><dd>{storageLabel[info.storage]}</dd>
@@ -174,7 +194,8 @@
   .small { font-size: 0.85rem; margin: 0.4rem 0 0; }
   .modes { border: none; padding: 0; margin: 0 0 0.6rem; display: grid; gap: 0.5rem; }
   .modes label { display: flex; gap: 0.6rem; align-items: flex-start; }
-  .modes input { width: auto; margin-top: 0.3rem; }
+  .modes input { width: auto; margin-top: 0.3rem; box-shadow: none; accent-color: var(--accent); }
+  .modes legend { padding: 0; margin-bottom: 0.4rem; }
   .status { position: sticky; bottom: 1rem; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.6rem 0.8rem; }
   @media (max-width: 480px) { dl { grid-template-columns: 1fr; } dd { margin-bottom: 0.5rem; } }
 </style>

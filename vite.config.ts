@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Fantasy Helper',
         short_name: 'Fantasy Helper',
         description: 'A reading companion for long fantasy series.',
-        theme_color: '#2b2340',
-        background_color: '#16121f',
+        theme_color: '#211b16',
+        background_color: '#211b16',
         display: 'standalone',
         start_url: '.',
         icons: [

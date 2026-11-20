@@ -60,8 +60,8 @@
   });
 </script>
 
-<section>
-  <h2>Relationships</h2>
+<section class="etched">
+  <h2>Relationships {#if links.length}<span class="count">{links.length}</span>{/if}</h2>
   {#if links.length === 0 && !adding}
     <p class="muted">No relationships yet. Add allies, family, memberships, ownership…</p>
   {/if}
@@ -132,8 +132,6 @@
 </section>
 
 <style>
-  section { margin: 1.5rem 0; }
-  h2 { font-size: 1.1rem; }
   .rel { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; padding: 0.2rem 0; }
   .kind { color: #c9a227; min-width: 6.5rem; font-size: 0.88rem; }
   .x { margin-left: auto; min-height: 32px; padding: 0 0.6rem; }

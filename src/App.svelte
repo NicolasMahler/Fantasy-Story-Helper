@@ -8,12 +8,15 @@
   import EntityForm from './lib/EntityForm.svelte';
   import SearchOverlay from './lib/SearchOverlay.svelte';
   import { update, applyUpdate, dismissUpdate } from './lib/update.svelte';
+  import { theme, toggleTheme } from './lib/theme.svelte';
 
   let info = $state<StartupInfo | null>(null);
   let error = $state<string | null>(null);
   let hash = $state(location.hash);
   const route = $derived(parseRoute(hash));
   const currentSeries = $derived('seriesId' in route ? route.seriesId : null);
+  /** Changes when a different page opens, so its content fades in. Series tabs fade on their own inside SeriesPage. */
+  const pageKey = $derived(route.name === 'series' ? `series:${route.seriesId}` : hash);
   let searchOpen = $state(false);
   let headerH = $state(52);
   $effect(() => document.documentElement.style.setProperty('--header-h', `${headerH}px`));
@@ -44,6 +47,18 @@
 <header bind:clientHeight={headerH}>
   <a class="brand" href="#/">Fantasy Helper</a>
   <nav>
+    <button
+      class="mode"
+      onclick={toggleTheme}
+      aria-label={theme.dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={theme.dark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {#if theme.dark}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+      {:else}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
+      {/if}
+    </button>
     <button class="search" onclick={() => (searchOpen = true)} aria-label="Search (/ or Ctrl+K)" title="Search (/ or Ctrl+K)">🔍<span class="label"> Search</span></button>
     <a href="#/" aria-current={route.name === 'library' ? 'page' : undefined}>Library</a>
     <a href="#/settings" aria-current={route.name === 'settings' ? 'page' : undefined}>Settings</a>
@@ -61,6 +76,7 @@
 {/if}
 
 <main>
+  {#key pageKey}<div class="page-in">
   {#if error}
     <p class="card">Couldn't open the database: {error}</p>
   {:else if !info}
@@ -85,6 +101,7 @@
   {:else}
     <p>Page not found. <a href="#/">Go to the library</a>.</p>
   {/if}
+  </div>{/key}
 </main>
 
 {#if update.ready}
@@ -104,8 +121,8 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem 16px;
-    border-bottom: 1px solid var(--border);
     background: var(--surface);
+    box-shadow: 0 4px 10px var(--shade-dark);
     position: sticky;
     top: 0;
     z-index: 20;
@@ -113,8 +130,11 @@
   }
   .brand { font-weight: 700; color: var(--text); text-decoration: none; }
   nav { display: flex; gap: 1rem; align-items: center; }
+  .mode { min-height: 36px; width: 36px; padding: 0; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
+  .mode svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .search { min-height: 36px; padding: 0.2rem 0.7rem; font-size: 0.85rem; color: var(--muted); border-radius: 999px; }
-  @media (max-width: 420px) { .search .label { display: none; } nav { gap: 0.75rem; } }
+  /* Phones have no room for the light/dark button; Settings → Appearance still has the choice. */
+  @media (max-width: 420px) { .search .label, .mode { display: none; } nav { gap: 0.75rem; } }
   nav a { text-decoration: none; color: var(--muted); padding: 0.5rem 0; }
   nav a[aria-current='page'] { color: var(--text); font-weight: 600; }
   .banner { background: var(--warn-bg); color: var(--warn-text); padding: 0.75rem 16px; }

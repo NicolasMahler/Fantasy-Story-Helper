@@ -9,6 +9,7 @@
   import TimelineTab from './TimelineTab.svelte';
   import GraphTab from './GraphTab.svelte';
   import { attempt } from './forms';
+  import { slideIndicator } from './motion';
 
   let { seriesId, tab }: { seriesId: number; tab: SeriesTab } = $props();
 
@@ -80,25 +81,30 @@
     {#if series.description}<p class="muted">{series.description}</p>{/if}
   {/if}
 
-  <nav class="tabs" aria-label="Series sections">
+  <nav class="tabs" aria-label="Series sections" use:slideIndicator={"[aria-current='page']"}>
+    <span class="slide-indicator" aria-hidden="true"></span>
     {#each tabs as t (t.id)}
       <a href={href({ name: 'series', seriesId, tab: t.id })} aria-current={tab === t.id ? 'page' : undefined}>{t.label}</a>
     {/each}
   </nav>
 
-  {#if tab === 'entries'}
-    <EntriesTab {seriesId} />
-  {:else if tab === 'books'}
-    <BooksTab {seriesId} onchange={load} />
-  {:else if tab === 'timeline'}
-    <TimelineTab {seriesId} />
-  {:else if tab === 'graph'}
-    <GraphTab {seriesId} />
-  {:else if tab === 'calendar'}
-    <CalendarTab {seriesId} />
-  {:else}
-    <TypesTab {seriesId} />
-  {/if}
+  {#key tab}
+    <div class="page-in">
+      {#if tab === 'entries'}
+        <EntriesTab {seriesId} />
+      {:else if tab === 'books'}
+        <BooksTab {seriesId} onchange={load} />
+      {:else if tab === 'timeline'}
+        <TimelineTab {seriesId} />
+      {:else if tab === 'graph'}
+        <GraphTab {seriesId} />
+      {:else if tab === 'calendar'}
+        <CalendarTab {seriesId} />
+      {:else}
+        <TypesTab {seriesId} />
+      {/if}
+    </div>
+  {/key}
 {/if}
 
 <style>
