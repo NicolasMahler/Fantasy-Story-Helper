@@ -108,5 +108,8 @@
   .sdot.s-open { border: 2px solid var(--accent); }
   .sdot.s-confirmed, .sdot.s-answered { background: var(--ok); }
   .sdot.s-wrong { background: var(--danger); }
+  /* On a highlighted chip the accent fill would hide the open ring, so dots take the chip's text colour. */
+  .chip[aria-pressed='true'] .sdot.s-open { border-color: currentColor; }
+  .chip[aria-pressed='true'] .sdot:not(.s-open) { box-shadow: 0 0 0 1.5px currentColor; }
   .why { display: block; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; margin-top: 0.1rem; }
 </style>
