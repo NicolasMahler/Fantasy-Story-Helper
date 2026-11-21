@@ -46,6 +46,23 @@ INSERT INTO entity_type (series_id, key, name, icon, color, is_builtin, sort_ord
 INSERT OR IGNORE INTO theory (entity_id)
   SELECT e.id FROM entity e JOIN entity_type t ON t.id = e.type_id WHERE t.key = 'theory';`;
 
+/** v6: quotes from the books, filed under an entry; on a theory they count as evidence for or against. */
+const quoteTable = `
+CREATE TABLE quote (
+  id                INTEGER PRIMARY KEY,
+  entity_id         INTEGER NOT NULL REFERENCES entity(id) ON DELETE CASCADE,  -- the entry it is filed under
+  text              TEXT NOT NULL,
+  book_id           INTEGER REFERENCES book(id) ON DELETE SET NULL,
+  chapter           TEXT NOT NULL DEFAULT '',                                  -- free text: "Ch. 12", "p. 340"
+  speaker_entity_id INTEGER REFERENCES entity(id) ON DELETE SET NULL,
+  note              TEXT NOT NULL DEFAULT '',
+  stance            TEXT CHECK (stance IN ('for', 'against')),                 -- theories only
+  created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX idx_quote_entity  ON quote(entity_id);
+CREATE INDEX idx_quote_speaker ON quote(speaker_entity_id);
+CREATE INDEX idx_quote_book    ON quote(book_id);`;
+
 /**
  * Ordered migrations; index + 1 is the resulting PRAGMA user_version. Never edit a shipped one.
  *   v1: schema.sql (initial schema)
@@ -53,8 +70,9 @@ INSERT OR IGNORE INTO theory (entity_id)
  *   v3: line icons for built-in types
  *   v4: entity.aliases
  *   v5: theory table and the built-in Theory type
+ *   v6: quote table
  */
-export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL, aliases, theoryTable + THEORY_TYPE_SQL];
+export const MIGRATIONS: string[] = [schemaV1, appMeta, LINE_ICONS_SQL, aliases, theoryTable + THEORY_TYPE_SQL, quoteTable];
 
 export function currentVersion(db: SqlDb): number {
   return db.query<{ user_version: number }>('PRAGMA user_version')[0].user_version;

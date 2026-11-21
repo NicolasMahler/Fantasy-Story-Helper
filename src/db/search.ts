@@ -19,7 +19,7 @@ export interface SearchResult {
   color: string;
   /** What kind of thing it is, e.g. "Character", "Book", "Age". */
   typeName: string;
-  /** Which field matched: 'name', 'description', 'relationship', 'title', or a custom field's label. */
+  /** Which field matched: 'name', 'description', 'relationship', 'quote', 'title', or a custom field's label. */
   field: string;
   snippet: Snippet | null;
 }
@@ -71,8 +71,9 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
      FROM entity e JOIN entity_type t ON t.id = e.type_id
      WHERE ${scope} AND (e.name LIKE ? ESCAPE '\\' OR e.aliases LIKE ? ESCAPE '\\' OR e.description LIKE ? ESCAPE '\\'
        OR e.attributes LIKE ? ESCAPE '\\'
-       OR e.id IN (SELECT from_entity_id FROM entity_link WHERE kind LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\'))`,
-    [...scopeParams, like, like, like, like, like, like],
+       OR e.id IN (SELECT from_entity_id FROM entity_link WHERE kind LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\')
+       OR e.id IN (SELECT entity_id FROM quote WHERE text LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\'))`,
+    [...scopeParams, like, like, like, like, like, like, like, like],
   );
   // First matching relationship per entity, fetched in one query rather than one per entity.
   const linkHits = new Map<number, { kind: string; note: string; other: string }>();
@@ -82,6 +83,14 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
      WHERE ${scope} AND (l.kind LIKE ? ESCAPE '\\' OR l.note LIKE ? ESCAPE '\\') ORDER BY l.id`,
     [...scopeParams, like, like],
   )) if (!linkHits.has(l.from_id)) linkHits.set(l.from_id, l);
+
+  // Likewise the first matching quote filed under each entity.
+  const quoteHits = new Map<number, { text: string; note: string }>();
+  for (const x of db.query<{ entity_id: number; text: string; note: string }>(
+    `SELECT q.entity_id, q.text, q.note FROM quote q JOIN entity e ON e.id = q.entity_id
+     WHERE ${scope} AND (q.text LIKE ? ESCAPE '\\' OR q.note LIKE ? ESCAPE '\\') ORDER BY q.id`,
+    [...scopeParams, like, like],
+  )) if (!quoteHits.has(x.entity_id)) quoteHits.set(x.entity_id, x);
 
   for (const e of entities) {
     const base = { kind: 'entity' as const, id: e.id, seriesId: e.series_id, name: e.name, icon: e.icon, color: e.color, typeName: e.type_name };
@@ -116,6 +125,12 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
     if (link) {
       const text = `${link.kind} ${link.other}${link.note ? `: ${link.note}` : ''}`;
       ranked.push({ rank: 3, r: { ...base, field: 'relationship', snippet: makeSnippet(text, q) } });
+      continue;
+    }
+    const quote = quoteHits.get(e.id);
+    if (quote) {
+      const text = quote.text.toLowerCase().includes(ql) ? quote.text : quote.note;
+      ranked.push({ rank: 3, r: { ...base, field: 'quote', snippet: makeSnippet(text, q) } });
     }
   }
 

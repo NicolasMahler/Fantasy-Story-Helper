@@ -167,6 +167,15 @@ function importAdd(db: SqlDb, dump: JsonDump): ImportResult {
     if (s !== null && t !== null) insert(db, 'mention', { source_entity_id: s, target_entity_id: t }, mCols);
   }
 
+  const qCols = columnsOf(db, 'quote');
+  for (const r of rowsOf(dump, 'quote')) {
+    const id = m(maps.entity, r.entity_id);
+    if (id === null) continue;
+    insert(db, 'quote', {
+      ...r, entity_id: id, book_id: m(maps.book, r.book_id), speaker_entity_id: m(maps.entity, r.speaker_entity_id),
+    }, qCols, ['id']);
+  }
+
   const seriesIds = [...maps.series.values()];
   for (const sid of seriesIds) recomputeSeries(db, sid);
   return { mode: 'add', seriesIds };

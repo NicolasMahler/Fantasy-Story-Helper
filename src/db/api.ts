@@ -8,6 +8,7 @@ import {
 } from './entities';
 import { getEventDetail, saveEvent, addParticipant, updateParticipantRole, removeParticipant, eventsForEntity } from './events';
 import { getTheoryDetail, saveTheory } from './theories';
+import { createQuote, updateQuote, deleteQuote, listQuotes, quotesBy } from './quotes';
 import { getTimeline } from './timeline';
 import { getGraph } from './graph';
 import { createLink, deleteLink, listLinks } from './links';
@@ -23,6 +24,7 @@ export const api = {
   createEntity, updateEntity, deleteEntity, getEntity, listEntities, searchEntities, backlinks,
   getEventDetail, saveEvent, addParticipant, updateParticipantRole, removeParticipant, eventsForEntity,
   getTheoryDetail, saveTheory,
+  createQuote, updateQuote, deleteQuote, listQuotes, quotesBy,
   listAges, createAge, updateAge, deleteAge, listBuckets, updateBucket,
   getTimeline,
   getGraph, createLink, deleteLink, listLinks,
