@@ -1,7 +1,9 @@
 import type { SqlDb } from './types';
-import { insertId, likeEscape } from './sql';
+import { bookRef, type BookRef } from './books';
+import { bookInSeries, insertId, likeEscape } from './sql';
 import type { FieldDef } from './entityTypes';
-import { parseMentionIds, stripMentions } from './mentions';
+import { parseMentionIds } from './mentions';
+import { aliasMatch, findSnippet } from './match';
 import { freezeDependents, recomputeSeries } from './events';
 import type { TheoryKind, TheoryStatus } from './theories';
 
@@ -38,7 +40,7 @@ export interface EntityDetail {
   created_at: string;
   updated_at: string;
   type: { id: number; key: string; name: string; icon: string; color: string; fields: FieldDef[] };
-  firstBook: { id: number; number: number; title: string } | null;
+  firstBook: BookRef | null;
   /** Current names of everything this entry's description links to, by id. */
   links: Record<number, LinkTarget>;
 }
@@ -60,11 +62,11 @@ export interface EntityListItem {
   snippet?: string;
 }
 
-const LIST_SELECT = `
-  SELECT e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color, th.kind AS theory_kind, th.status AS theory_status,
-         b.number AS first_book_number
-  FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id
+const LIST_COLUMNS = `e.id, e.name, e.type_id, t.name AS type_name, t.icon, t.color,
+  th.kind AS theory_kind, th.status AS theory_status, b.number AS first_book_number`;
+const LIST_FROM = `FROM entity e JOIN entity_type t ON t.id = e.type_id LEFT JOIN book b ON b.id = e.first_book_id
   LEFT JOIN theory th ON th.entity_id = e.id`;
+const LIST_SELECT = `SELECT ${LIST_COLUMNS} ${LIST_FROM}`;
 
 function cleanName(name: string): string {
   const n = name.trim();
@@ -92,14 +94,6 @@ function typeKey(db: SqlDb, seriesId: number, typeId: number): string {
   return t.key;
 }
 
-/** Returns the book id (or null), or throws if the book doesn't belong to the series. */
-function firstBook(db: SqlDb, seriesId: number, bookId: number | null | undefined): number | null {
-  if (bookId == null) return null;
-  if (!db.query('SELECT 1 FROM book WHERE id = ? AND series_id = ?', [bookId, seriesId]).length) {
-    throw new Error('That book does not belong to this series.');
-  }
-  return bookId;
-}
 
 /** Rule 3: rebuild this entity's mention rows from its description (same-series targets only, no self-links). */
 function rebuildMentions(db: SqlDb, id: number, seriesId: number, description: string): void {
@@ -121,7 +115,7 @@ export function createEntity(db: SqlDb, input: EntityInput): number {
     db.exec(
       `INSERT INTO entity (series_id, type_id, name, description, first_book_id, attributes, aliases) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        input.seriesId, input.typeId, name, description, firstBook(db, input.seriesId, input.firstBookId), JSON.stringify(input.attributes ?? {}),
+        input.seriesId, input.typeId, name, description, bookInSeries(db, input.seriesId, input.firstBookId), JSON.stringify(input.attributes ?? {}),
         JSON.stringify(cleanAliases(input.aliases ?? [], name)),
       ],
     );
@@ -147,7 +141,7 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
     };
     if (patch.name !== undefined) set('name', cleanName(patch.name));
     if (patch.description !== undefined) set('description', patch.description);
-    if (patch.firstBookId !== undefined) set('first_book_id', firstBook(db, cur.series_id, patch.firstBookId));
+    if (patch.firstBookId !== undefined) set('first_book_id', bookInSeries(db, cur.series_id, patch.firstBookId));
     if (patch.attributes !== undefined) set('attributes', JSON.stringify(patch.attributes));
     // Re-clean on a rename too, so an entry never lists its own name as another name.
     if (patch.aliases !== undefined || patch.name !== undefined) {
@@ -234,7 +228,7 @@ export function getEntity(db: SqlDb, id: number): EntityDetail | null {
       color: row.t_color,
       fields: JSON.parse(row.t_fields) as FieldDef[],
     },
-    firstBook: row.first_book_id ? { id: row.first_book_id, number: row.b_number!, title: row.b_title! } : null,
+    firstBook: bookRef(row.first_book_id, row.b_number, row.b_title),
     links,
   };
 }
@@ -250,32 +244,10 @@ export function backlinks(db: SqlDb, id: number): EntityListItem[] {
 /** Rows of a search query: list columns plus what's needed to explain the match. */
 type SearchRow = EntityListItem & { aliases: string; description: string };
 
-const SEARCH_SELECT = LIST_SELECT.replace('b.number AS first_book_number', 'b.number AS first_book_number, e.aliases, e.description');
+const SEARCH_SELECT = `SELECT ${LIST_COLUMNS}, e.aliases, e.description ${LIST_FROM}`;
 
-/** The first alias containing `term` (any case), if any. */
-function aliasMatch(aliasesJson: string, term: string): string | undefined {
-  const t = term.toLowerCase();
-  return (JSON.parse(aliasesJson) as string[]).find((a) => a.toLowerCase().includes(t));
-}
-
-/** Plain-text excerpt around the first match of `term`. */
-function excerpt(description: string, term: string): string | undefined {
-  const plain = stripMentions(description).replace(/\s+/g, ' ').trim();
-  const i = plain.toLowerCase().indexOf(term.toLowerCase());
-  if (i < 0) return undefined;
-  // Start and end on word boundaries where there is one nearby.
-  let from = Math.max(0, i - 30);
-  if (from > 0) {
-    const space = plain.indexOf(' ', from);
-    if (space >= 0 && space < i) from = space + 1;
-  }
-  let to = Math.min(plain.length, i + term.length + 50);
-  if (to < plain.length) {
-    const space = plain.lastIndexOf(' ', to);
-    if (space > i + term.length) to = space;
-  }
-  return `${from > 0 ? '…' : ''}${plain.slice(from, to)}${to < plain.length ? '…' : ''}`;
-}
+/** The entries list shows shorter excerpts than global search. */
+const LIST_EXCERPT = { before: 30, after: 50 };
 
 /**
  * Entries of a series, optionally of one type. With `search`, entries match on their name, another name
@@ -317,7 +289,7 @@ export function listEntities(
       continue;
     }
     // LIKE also matches link markup (`@[Name](12)`); keep only matches in the text people see.
-    const snippet = excerpt(description, term);
+    const snippet = findSnippet(description, term, LIST_EXCERPT)?.text;
     if (snippet) ranked.push({ rank: 2, item: { ...item, snippet } });
   }
   return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.item);

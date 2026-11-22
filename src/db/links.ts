@@ -1,5 +1,5 @@
 import type { SqlDb } from './types';
-import { insertId } from './sql';
+import { inSeries, insertId, seriesOf } from './sql';
 
 /** Suggestions for the relationship kind field (free text is allowed). */
 export const LINK_KINDS = [
@@ -27,16 +27,14 @@ export interface LinkRow {
   endEvent: { id: number; name: string } | null;
 }
 
-const seriesOf = (db: SqlDb, id: number) =>
-  db.query<{ series_id: number }>('SELECT series_id FROM entity WHERE id = ?', [id])[0]?.series_id;
 
 export function createLink(db: SqlDb, input: LinkInput): number {
   const kind = input.kind.trim();
   if (!kind) throw new Error('Choose or type a kind of relationship.');
   if (input.fromId === input.toId) throw new Error('An entry cannot be related to itself.');
   return db.transaction(() => {
-    const s = seriesOf(db, input.fromId);
-    if (s === undefined || seriesOf(db, input.toId) !== s) throw new Error('Both entries must be in the same series.');
+    const s = seriesOf(db, 'entity', input.fromId);
+    if (s === undefined || !inSeries(db, 'entity', input.toId, s)) throw new Error('Both entries must be in the same series.');
     for (const ev of [input.startEventId, input.endEventId]) {
       if (ev == null) continue;
       const ok = db.query(

@@ -1,14 +1,9 @@
 import type { SqlDb } from './types';
 import type { FieldDef } from './entityTypes';
-import { stripMentions } from './mentions';
 import { likeEscape } from './sql';
+import { aliasMatch, findSnippet, makeSnippet, type Snippet } from './match';
 
-export interface Snippet {
-  text: string;
-  /** Where the match starts in `text` (for highlighting). */
-  start: number;
-  length: number;
-}
+export type { Snippet };
 
 export interface SearchResult {
   kind: 'entity' | 'book' | 'age' | 'series';
@@ -22,20 +17,6 @@ export interface SearchResult {
   /** Which field matched: 'name', 'description', 'relationship', 'title', or a custom field's label. */
   field: string;
   snippet: Snippet | null;
-}
-
-const BEFORE = 40;
-const AFTER = 70;
-
-/** Snippet around the first match, with `@` links shown as their names. */
-export function makeSnippet(text: string, q: string): Snippet {
-  const plain = stripMentions(text).replace(/\s+/g, ' ').trim();
-  const idx = plain.toLowerCase().indexOf(q.toLowerCase());
-  if (idx < 0) return { text: plain.length > BEFORE + AFTER ? `${plain.slice(0, BEFORE + AFTER)}…` : plain, start: 0, length: 0 };
-  const from = Math.max(0, idx - BEFORE);
-  const to = Math.min(plain.length, idx + q.length + AFTER);
-  const prefix = from > 0 ? '…' : '';
-  return { text: `${prefix}${plain.slice(from, to)}${to < plain.length ? '…' : ''}`, start: idx - from + prefix.length, length: q.length };
 }
 
 /** Search one series (or everything when `seriesId` is null). Best matches first. */
@@ -90,7 +71,7 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       ranked.push({ rank: name.startsWith(ql) ? 0 : 1, r: { ...base, field: 'name', snippet: null } });
       continue;
     }
-    const alias = (JSON.parse(e.aliases) as string[]).find((a) => a.toLowerCase().includes(ql));
+    const alias = aliasMatch(e.aliases, q);
     if (alias) {
       const text = `Also known as ${alias}`;
       const at = text.toLowerCase().indexOf(ql, 'Also known as '.length);
@@ -100,8 +81,9 @@ export function search(db: SqlDb, opts: { seriesId: number | null; q: string; li
       });
       continue;
     }
-    if (stripMentions(e.description).toLowerCase().includes(ql)) {
-      ranked.push({ rank: 2, r: { ...base, field: 'description', snippet: makeSnippet(e.description, q) } });
+    const inDescription = findSnippet(e.description, q);
+    if (inDescription) {
+      ranked.push({ rank: 2, r: { ...base, field: 'description', snippet: inDescription } });
       continue;
     }
     const attrs = JSON.parse(e.attributes) as Record<string, unknown>;

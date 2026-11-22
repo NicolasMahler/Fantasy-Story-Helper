@@ -3,7 +3,7 @@ import type { SqlDb } from './types';
 import { insertId } from './sql';
 import { currentVersion, LINE_ICONS_SQL, THEORY_TYPE_SQL } from './migrations';
 import { DATA_TABLES, type DataTable, type JsonDump } from './dump';
-import { recomputeSeries } from './events';
+import { detachRelativeDates, recomputeSeries } from './events';
 import { MENTION_RE } from './mentions';
 
 export type ImportMode = 'replace' | 'add';
@@ -52,8 +52,7 @@ function insert(db: SqlDb, t: DataTable, row: Row, cols: Set<string>, skip: stri
 /** Replace mode: wipe all user data and load the dump, atomically. App settings (app_meta) are kept. */
 function importReplace(db: SqlDb, dump: JsonDump): ImportResult {
   db.exec('PRAGMA defer_foreign_keys = ON');
-  // Relative dates would be SET NULL mid-delete and trip the event CHECK; detach them first.
-  db.exec('UPDATE event SET date_precision = NULL, relative_to_event = NULL, offset_years = NULL WHERE relative_to_event IS NOT NULL');
+  detachRelativeDates(db);
   for (const t of [...DATA_TABLES].reverse()) db.exec(`DELETE FROM "${t}"`);
   for (const t of DATA_TABLES) {
     const cols = columnsOf(db, t);

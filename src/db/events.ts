@@ -1,5 +1,6 @@
 import type { SqlDb } from './types';
-import { insertId } from './sql';
+import { bookRef, type BookRef } from './books';
+import { bookInSeries, extensionSeries, inSeries, insertId, seriesOf } from './sql';
 import {
   computeSortKeys, wouldCreateCycle, formatDate,
   type AgeInfo, type BucketInfo, type DatePrecision, type EventDate,
@@ -46,7 +47,7 @@ export interface EventDetail {
   sortKeyOverride: number | null;
   effectiveKey: number | null;
   manualOrder: number;
-  book: { id: number; number: number; title: string } | null;
+  book: BookRef | null;
   toldBy: { id: number; name: string; icon: string } | null;
   relativeTarget: { id: number; name: string } | null;
   label: string;
@@ -111,6 +112,18 @@ export function recomputeSeries(db: SqlDb, seriesId: number): void {
 }
 
 /**
+ * Clears relative dates (in one series, or everywhere) before deleting events in bulk: deleting an anchor
+ * would SET NULL relative_to_event and trip the event CHECK.
+ */
+export function detachRelativeDates(db: SqlDb, seriesId?: number): void {
+  const scope = seriesId === undefined ? '' : ' AND entity_id IN (SELECT id FROM entity WHERE series_id = ?)';
+  db.exec(
+    `UPDATE event SET date_precision = NULL, relative_to_event = NULL, offset_years = NULL WHERE relative_to_event IS NOT NULL${scope}`,
+    seriesId === undefined ? [] : [seriesId],
+  );
+}
+
+/**
  * Before an event disappears (deleted or retyped), events dated relative to it are frozen at their
  * current position as a plain year (or made undated if they had no position).
  */
@@ -132,16 +145,10 @@ export function freezeDependents(db: SqlDb, anchorId: number): void {
 }
 
 function eventSeries(db: SqlDb, id: number): number {
-  const [row] = db.query<{ series_id: number }>(
-    'SELECT e.series_id FROM event ev JOIN entity e ON e.id = ev.entity_id WHERE ev.entity_id = ?',
-    [id],
-  );
-  if (!row) throw new Error('That entry is not an event.');
-  return row.series_id;
+  const s = extensionSeries(db, 'event', id);
+  if (s === undefined) throw new Error('That entry is not an event.');
+  return s;
 }
-
-const inSeries = (db: SqlDb, table: 'entity' | 'book' | 'age', id: number, seriesId: number) =>
-  db.query(`SELECT 1 FROM ${table} WHERE id = ? AND series_id = ?`, [id, seriesId]).length > 0;
 
 const isInt = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n);
 
@@ -198,7 +205,7 @@ export function saveEvent(db: SqlDb, id: number, input: EventInput): void {
     }
     if (!isInt(input.manualOrder)) throw new Error('The tiebreak order must be a whole number.');
     if (input.mode !== 'present' && input.mode !== 'recounted') throw new Error('Unknown mode.');
-    if (input.bookId !== null && !inSeries(db, 'book', input.bookId, seriesId)) throw new Error('That book does not belong to this series.');
+    bookInSeries(db, seriesId, input.bookId);
     const toldBy = input.mode === 'recounted' ? input.toldById : null;
     if (toldBy !== null && !inSeries(db, 'entity', toldBy, seriesId)) throw new Error('The teller must be an entry in this series.');
 
@@ -248,7 +255,7 @@ export function getEventDetail(db: SqlDb, id: number): EventDetail | null {
     sortKeyOverride: r.sort_key_override,
     effectiveKey: r.sort_key_override ?? r.sort_key,
     manualOrder: r.manual_order,
-    book: r.book_id ? { id: r.book_id, number: r.b_number!, title: r.b_title! } : null,
+    book: bookRef(r.book_id, r.b_number, r.b_title),
     toldBy: r.told_by_entity_id ? { id: r.told_by_entity_id, name: r.t_name!, icon: r.t_icon ?? '' } : null,
     relativeTarget: r.relative_to_event ? { id: r.relative_to_event, name: r.rel_name! } : null,
     label: labeller(db, r.series_id)(r),
@@ -298,9 +305,9 @@ export function removeParticipant(db: SqlDb, participantId: number): void {
 
 /** Events an entry takes part in, in story order (undated last). */
 export function eventsForEntity(db: SqlDb, entityId: number): EntityEvent[] {
-  const [ent] = db.query<{ series_id: number }>('SELECT series_id FROM entity WHERE id = ?', [entityId]);
-  if (!ent) return [];
-  const label = labeller(db, ent.series_id);
+  const seriesId = seriesOf(db, 'entity', entityId);
+  if (seriesId === undefined) return [];
+  const label = labeller(db, seriesId);
   return db
     .query<EventRow & { name: string; role: string; b_number: number | null }>(
       `SELECT * FROM (

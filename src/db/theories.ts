@@ -1,4 +1,6 @@
 import type { SqlDb } from './types';
+import { bookRef, type BookRef } from './books';
+import { bookInSeries, extensionSeries } from './sql';
 
 /** A theory is a guess that turns out confirmed or wrong; a question is open until it's answered. */
 export type TheoryKind = 'theory' | 'question';
@@ -30,7 +32,7 @@ export interface TheoryDetail {
   entityId: number;
   kind: TheoryKind;
   status: TheoryStatus;
-  resolvedBook: { id: number; number: number; title: string } | null;
+  resolvedBook: BookRef | null;
   resolution: string;
 }
 
@@ -45,12 +47,9 @@ export function statusForKind(kind: TheoryKind, status: TheoryStatus): TheorySta
 }
 
 function theorySeries(db: SqlDb, id: number): number {
-  const [row] = db.query<{ series_id: number }>(
-    'SELECT e.series_id FROM theory th JOIN entity e ON e.id = th.entity_id WHERE th.entity_id = ?',
-    [id],
-  );
-  if (!row) throw new Error('That entry is not a theory.');
-  return row.series_id;
+  const s = extensionSeries(db, 'theory', id);
+  if (s === undefined) throw new Error('That entry is not a theory.');
+  return s;
 }
 
 export function saveTheory(db: SqlDb, id: number, input: TheoryInput): void {
@@ -61,10 +60,7 @@ export function saveTheory(db: SqlDb, id: number, input: TheoryInput): void {
       throw new Error(input.kind === 'question' ? 'A question is either open or answered.' : 'A theory is open, confirmed or wrong.');
     }
     const open = input.status === 'open';
-    const bookId = open ? null : input.resolvedBookId;
-    if (bookId !== null && !db.query('SELECT 1 FROM book WHERE id = ? AND series_id = ?', [bookId, seriesId]).length) {
-      throw new Error('That book does not belong to this series.');
-    }
+    const bookId = bookInSeries(db, seriesId, open ? null : input.resolvedBookId);
     const resolution = open ? '' : input.resolution.trim();
     db.exec('UPDATE theory SET kind = ?, status = ?, resolved_book_id = ?, resolution = ? WHERE entity_id = ?', [
       input.kind, input.status, bookId, resolution, id,
@@ -87,7 +83,7 @@ export function getTheoryDetail(db: SqlDb, id: number): TheoryDetail | null {
     entityId: id,
     kind: r.kind,
     status: r.status,
-    resolvedBook: r.resolved_book_id ? { id: r.resolved_book_id, number: r.b_number!, title: r.b_title! } : null,
+    resolvedBook: bookRef(r.resolved_book_id, r.b_number, r.b_title),
     resolution: r.resolution,
   };
 }

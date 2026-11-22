@@ -6,7 +6,8 @@ import { addBook } from '../src/db/books';
 import { createAge } from '../src/db/calendar';
 import { createLink } from '../src/db/links';
 import { createType } from '../src/db/entityTypes';
-import { search, makeSnippet } from '../src/db/search';
+import { search } from '../src/db/search';
+import { makeSnippet } from '../src/db/match';
 import type { SqlDb } from '../src/db/types';
 
 let db: SqlDb;
