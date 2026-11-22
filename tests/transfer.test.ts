@@ -9,6 +9,7 @@ import { createAge } from '../src/db/calendar';
 import { saveEvent, addParticipant, getEventDetail, type EventInput } from '../src/db/events';
 import { createLink, listLinks } from '../src/db/links';
 import { saveTheory, getTheoryDetail } from '../src/db/theories';
+import { createQuote, listQuotes } from '../src/db/quotes';
 import { dumpJson } from '../src/db/dump';
 import { validateDump, importJson } from '../src/db/transfer';
 import { getMeta, recordExport } from '../src/db/meta';
@@ -34,6 +35,7 @@ function populate(db: SqlDb, seriesId: number, typeId: (k: string) => number) {
   createLink(db, { fromId: hero, toId: bard, kind: 'friends', startEventId: war });
   const guess = createEntity(db, { seriesId, typeId: typeId('theory'), name: 'Bard is a spy' });
   saveTheory(db, guess, { kind: 'theory', status: 'confirmed', resolvedBookId: book, resolution: 'He confesses.' });
+  createQuote(db, { entityId: guess, text: 'I was never yours.', bookId: book, chapter: 'Ch. 9', speakerId: bard, note: '', stance: 'for' });
 }
 
 const count = (db: SqlDb, t: string) => db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ${t}`)[0].n;
@@ -154,6 +156,10 @@ describe('importJson: add', () => {
     const guess = getTheoryDetail(db, byName(db, 'Bard is a spy', copy))!;
     expect(guess).toMatchObject({ status: 'confirmed', resolution: 'He confesses.', resolvedBook: { title: 'One' } });
     expect(guess.resolvedBook!.id).toBe(getEntity(db, hero)!.firstBook!.id);
+    expect(listQuotes(db, guess.entityId)).toMatchObject([{
+      text: 'I was never yours.', chapter: 'Ch. 9', stance: 'for',
+      book: { id: guess.resolvedBook!.id }, speaker: { id: byName(db, 'Bard', copy) },
+    }]);
   });
 
   it('numbers repeated imports and leaves the original untouched', () => {

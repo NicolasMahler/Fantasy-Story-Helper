@@ -8,6 +8,7 @@
   import EventPanel from './EventPanel.svelte';
   import TheoryPanel from './TheoryPanel.svelte';
   import Relationships from './Relationships.svelte';
+  import Quotes from './Quotes.svelte';
   import type { EntityEvent } from '../db/events';
   import { attempt } from './forms';
 
@@ -31,7 +32,9 @@
     if (!entity) return;
     const n = mentionedIn.length;
     const extra = n ? ` ${n} ${n === 1 ? 'entry links' : 'entries link'} to it; those links will become plain text.` : '';
-    if (!confirm(`Delete “${entity.name}”?${extra} This can't be undone.`)) return;
+    const q = (await rpc('listQuotes', entityId)).length;
+    const quotes = q ? ` Its ${q === 1 ? 'quote' : `${q} quotes`} will be deleted too.` : '';
+    if (!confirm(`Delete “${entity.name}”?${extra}${quotes} This can't be undone.`)) return;
     const ok = await attempt(() => rpc('deleteEntity', entityId), (m) => alert(`Couldn't delete: ${m}`));
     if (ok) location.hash = href({ name: 'series', seriesId, tab: 'entries' });
   }
@@ -121,6 +124,8 @@
       </ul>
     </section>
   {/if}
+
+  {#key version}<Quotes {seriesId} {entityId} isTheory={entity.type.key === 'theory'} />{/key}
 
   <Relationships {seriesId} {entityId} entityName={entity.name} />
 

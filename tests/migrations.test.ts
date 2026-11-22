@@ -16,7 +16,7 @@ describe('migrate', () => {
     expect(migrate(db)).toBe(MIGRATIONS.length);
     expect(objects(db, 'table')).toEqual([
       'age', 'app_meta', 'book', 'bucket_default', 'entity', 'entity_link', 'entity_type',
-      'event', 'event_participant', 'mention', 'series', 'theory',
+      'event', 'event_participant', 'mention', 'quote', 'series', 'theory',
     ]);
     expect(objects(db, 'view')).toEqual(['v_cooccurrence', 'v_timeline']);
   });

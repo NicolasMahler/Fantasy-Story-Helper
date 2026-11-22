@@ -109,7 +109,7 @@
         {/each}
       </ul>
     {:else}
-      <p class="muted empty">Names, other names, descriptions, fields, relationships, books and ages. ↑ ↓ to move, Enter to open.</p>
+      <p class="muted empty">Names, other names, descriptions, fields, relationships, quotes, books and ages. ↑ ↓ to move, Enter to open.</p>
     {/if}
   </div>
 {/if}

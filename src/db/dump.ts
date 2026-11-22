@@ -12,7 +12,7 @@ export interface JsonDump {
 
 /** User-data tables in dependency order (parents first). `app_meta` is deliberately excluded. */
 export const DATA_TABLES = [
-  'series', 'book', 'age', 'entity_type', 'bucket_default', 'entity', 'event', 'theory', 'event_participant', 'entity_link', 'mention',
+  'series', 'book', 'age', 'entity_type', 'bucket_default', 'entity', 'event', 'theory', 'event_participant', 'entity_link', 'mention', 'quote',
 ] as const;
 export type DataTable = (typeof DATA_TABLES)[number];
 
@@ -29,6 +29,7 @@ const SERIES_FILTER: Record<DataTable, string> = {
   event_participant: `event_id IN (${inSeriesEntities})`,
   entity_link: `from_entity_id IN (${inSeriesEntities})`,
   mention: `source_entity_id IN (${inSeriesEntities})`,
+  quote: `entity_id IN (${inSeriesEntities})`,
 };
 
 /** JSON export of all data, or of one series when `seriesId` is given. */
