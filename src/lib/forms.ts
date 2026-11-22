@@ -1,4 +1,23 @@
 /** Small helpers shared by form components. */
+import type { Attributes } from '../db/entities';
+import type { FieldDef } from '../db/entityTypes';
+
+/**
+ * Attributes to save from an entry form. Fields the type defines come from the draft: blank ones are
+ * cleared, numbers are stored as numbers. Values of fields the type no longer defines are kept from
+ * `previous` (pass null when the type changed, so they are dropped).
+ */
+export function mergeAttributes(fields: FieldDef[], draft: Record<string, unknown>, previous: Attributes | null): Attributes {
+  const defined = new Set(fields.map((f) => f.key));
+  const out: Attributes = {};
+  for (const [k, v] of Object.entries(previous ?? {})) if (!defined.has(k)) out[k] = v;
+  for (const f of fields) {
+    const v = draft[f.key];
+    if (v === undefined || v === null || v === '') continue;
+    out[f.key] = f.kind === 'number' ? Number(v) : String(v);
+  }
+  return out;
+}
 
 /**
  * Value of a number input as a number, or null when blank.

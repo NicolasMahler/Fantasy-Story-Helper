@@ -12,6 +12,12 @@ describe('timeAgo', () => {
     expect(timeAgo(ago(3 * 86_400_000), now)).toBe('3 days ago');
     expect(timeAgo(ago(1 * 86_400_000), now)).toBe('1 day ago');
   });
+
+  it('rounds up into the next unit instead of saying "60 minutes"', () => {
+    expect(timeAgo(ago(59.7 * 60_000), now)).toBe('1 hour ago');
+    expect(timeAgo(ago(59.7 * 1000), now)).toBe('1 minute ago');
+    expect(timeAgo(ago(23.8 * 3_600_000), now)).toBe('1 day ago');
+  });
 });
 
 describe('backupOverdue', () => {

@@ -20,6 +20,7 @@
   let editing = $state(false);
   /** Bumped after edits so the event panel reloads (e.g. type changed to/from Event). */
   let version = $state(0);
+  let loadError = $state<string | null>(null);
 
   async function load() {
     [entity, mentionedIn, events] = await Promise.all([
@@ -39,7 +40,8 @@
     if (ok) location.hash = href({ name: 'series', seriesId, tab: 'entries' });
   }
 
-  load();
+  const reload = () => attempt(load, (m) => (loadError = m));
+  reload();
 </script>
 
 <div class="topbar">
@@ -61,14 +63,16 @@
   {/if}
 </div>
 
-{#if entity === null}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load this entry: {loadError}</p>
+{:else if entity === null}
   <p>This entry doesn't exist (it may have been deleted).</p>
 {:else if entity && editing}
   <h1>Edit {entity.name}</h1>
   <EntityForm
     {seriesId}
     {entity}
-    onsaved={async () => { editing = false; await load(); }}
+    onsaved={() => { editing = false; reload(); }}
     oncancel={() => (editing = false)}
   />
 {:else if entity}

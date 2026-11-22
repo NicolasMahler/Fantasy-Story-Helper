@@ -12,6 +12,7 @@
   let description = $state('');
   let busy = $state(false);
   let error = $state<string | null>(null);
+  let loadError = $state<string | null>(null);
 
   let backup = $state<BackupStatus | null>(null);
 
@@ -66,10 +67,11 @@
     }, (m) => (editError = m));
   }
 
-  load();
+  attempt(load, (m) => (loadError = m));
 </script>
 
 <h1>Library</h1>
+{#if loadError}<p class="error" role="alert">Couldn't load your library: {loadError}</p>{/if}
 
 {#if backup && backupOverdue(backup)}
   <div class="backup card" role="note">

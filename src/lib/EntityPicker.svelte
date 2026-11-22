@@ -27,12 +27,13 @@
   let open = $state(false);
   let active = $state(0);
   let seq = 0;
+  const LIMIT = 12;
 
   async function search() {
     const mine = ++seq;
-    const found = await rpc('searchEntities', seriesId, typeKey, term, 12);
+    const found = await rpc('searchEntities', seriesId, typeKey, term, LIMIT + exclude.length).catch(() => [] as EntityListItem[]);
     if (mine !== seq) return;
-    results = found.filter((r) => !exclude.includes(r.id));
+    results = found.filter((r) => !exclude.includes(r.id)).slice(0, LIMIT);
     active = 0;
     open = true;
   }

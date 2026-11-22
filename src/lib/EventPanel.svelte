@@ -8,6 +8,8 @@
   import { DATE_PRECISIONS, type DatePrecision } from '../db/dates';
   import { href } from './route';
   import EntityPicker from './EntityPicker.svelte';
+  import PickedEntry from './PickedEntry.svelte';
+  import BookSelect from './BookSelect.svelte';
   import { attempt, numOrNull } from './forms';
 
   let { seriesId, eventId }: { seriesId: number; eventId: number } = $props();
@@ -18,6 +20,7 @@
   let buckets = $state<BucketRow[]>([]);
   let editing = $state(false);
   let error = $state<string | null>(null);
+  let loadError = $state<string | null>(null);
   let pError = $state<string | null>(null);
   let newRole = $state('');
 
@@ -83,18 +86,20 @@
     }, (m) => (error = m));
   }
 
-  async function participantOp(fn: () => Promise<unknown>) {
+  function participantOp(fn: () => Promise<unknown>): Promise<boolean> {
     pError = null;
-    await attempt(async () => {
+    return attempt(async () => {
       await fn();
       await load();
     }, (m) => (pError = m));
   }
 
-  load();
+  attempt(load, (m) => (loadError = m));
 </script>
 
-{#if detail}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load the event details: {loadError}</p>
+{:else if detail}
   <section class="card event">
     {#if editing}
       <form class="stack" onsubmit={save}>
@@ -106,19 +111,12 @@
         {#if mode === 'recounted'}
           <div class="field">
             <span class="lbl">Told by</span>
-            {#if toldBy}
-              <div class="row"><strong>{toldBy.name}</strong><button type="button" class="ghost" onclick={() => (toldBy = null)}>Clear</button></div>
-            {:else}
-              <EntityPicker {seriesId} label="Told by" placeholder="Who tells or remembers it?" onpick={(e) => (toldBy = { id: e.id, name: e.name })} />
-            {/if}
+            <PickedEntry bind:value={toldBy} {seriesId} label="Told by" placeholder="Who tells or remembers it?" />
           </div>
         {/if}
 
         <label>{mode === 'recounted' ? 'Described in' : 'Happens in'}
-          <select bind:value={bookId}>
-            <option value={null}>(no book)</option>
-            {#each books as b (b.id)}<option value={b.id}>Book {b.number}: {b.title}</option>{/each}
-          </select>
+          <BookSelect bind:value={bookId} {books} />
         </label>
 
         <label>Date
@@ -159,11 +157,7 @@
             </label>
             <div class="field grow">
               <span class="lbl">Event</span>
-              {#if relTarget}
-                <div class="row"><strong>{relTarget.name}</strong><button type="button" class="ghost" onclick={() => (relTarget = null)}>Change</button></div>
-              {:else}
-                <EntityPicker {seriesId} typeKey="event" exclude={[eventId]} label="Relative to event" placeholder="Search events…" onpick={(e) => (relTarget = { id: e.id, name: e.name })} />
-              {/if}
+              <PickedEntry bind:value={relTarget} {seriesId} typeKey="event" exclude={[eventId]} label="Relative to event" placeholder="Search events…" clearLabel="Change" />
             </div>
           </div>
           <small class="muted">Use 0 years for “the same year as”.</small>
@@ -230,7 +224,10 @@
               list="role-suggestions"
               value={p.role}
               aria-label={`Role of ${p.name}`}
-              onchange={(e) => participantOp(() => rpc('updateParticipantRole', p.id, e.currentTarget.value))}
+              onchange={(e) => {
+                const input = e.currentTarget;
+                participantOp(() => rpc('updateParticipantRole', p.id, input.value)).then((ok) => { if (!ok) input.value = p.role; });
+              }}
             />
             <button class="ghost" aria-label={`Remove ${p.name}`} onclick={() => participantOp(() => rpc('removeParticipant', p.id))}>✕</button>
           </li>

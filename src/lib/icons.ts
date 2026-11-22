@@ -31,9 +31,9 @@ export const isIconName = (icon: string): icon is keyof typeof ICONS => Object.h
 /** For plain-text places (dropdown options, labels): emoji pass through, named icons are left out. */
 export const iconText = (icon: string): string => (isIconName(icon) ? '' : icon);
 
-/** Icons offered in the type picker, built-in type icons first. */
+/** Icons offered in the type picker, built-in type icons first. Each must also be in the glob above (tests/icons.test.ts checks). */
 export const PICKER_ICONS: string[] = [
-  'user', 'users-group', 'building-castle', 'swords', 'shield', 'diamond', 'wand', 'paw', 'flame', 'script',
+  'user', 'users-group', 'building-castle', 'swords', 'shield', 'diamond', 'wand', 'paw', 'flame', 'script', 'bulb',
   'dragon', 'sword', 'bow', 'axe', 'hammer', 'crown', 'chess-knight', 'chess-queen', 'chess-rook', 'skull',
   'ghost-2', 'mask', 'eye', 'feather', 'book-2', 'map-2', 'map-pin', 'compass', 'globe', 'mountain', 'trees',
   'leaf', 'tent', 'campfire', 'building-church', 'tower', 'ship', 'anchor', 'horse', 'spider', 'fish', 'bone',

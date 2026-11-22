@@ -27,12 +27,13 @@
     const s = scope;
     clearTimeout(timer);
     if (!query.trim()) {
+      seq++; // a search still in flight must not fill the list back in
       results = [];
       return;
     }
     timer = setTimeout(async () => {
       const mine = ++seq;
-      const r = await rpc('search', { seriesId: s, q: query, limit: 40 });
+      const r = await rpc('search', { seriesId: s, q: query, limit: 40 }).catch(() => [] as SearchResult[]);
       if (mine !== seq) return;
       results = r;
       active = 0;

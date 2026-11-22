@@ -33,6 +33,16 @@ describe('createEntity / getEntity', () => {
     expect(() => createEntity(db, { seriesId: other, typeId: typeId('item'), name: 'X' })).toThrow(/type/i);
   });
 
+  it('rejects a first book from another series, on create and update', () => {
+    const other = createSeries(db, { name: 'Other' });
+    const foreign = addBook(db, other, 'Elsewhere');
+    expect(() => createEntity(db, { seriesId, typeId: typeId('item'), name: 'X', firstBookId: foreign })).toThrow(/book/i);
+    const id = createEntity(db, { seriesId, typeId: typeId('item'), name: 'Y' });
+    expect(() => updateEntity(db, id, { firstBookId: foreign })).toThrow(/book/i);
+    updateEntity(db, id, { firstBookId: null });
+    expect(getEntity(db, id)!.first_book_id).toBeNull();
+  });
+
   it('gives event entries their event row (rule 2)', () => {
     const id = createEntity(db, { seriesId, typeId: typeId('event'), name: 'The Fall' });
     expect(db.query('SELECT mode, date_precision FROM event WHERE entity_id = ?', [id])).toEqual([

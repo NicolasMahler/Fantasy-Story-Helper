@@ -15,3 +15,12 @@ export function slugify(s: string, fallback = ''): string {
     .replace(/^-+|-+$/g, '');
   return slug || fallback;
 }
+
+/** The first user-perceived character, so multi-part emoji (🧙‍♂️, flags) stay whole. */
+export function firstGrapheme(s: string): string {
+  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)) return segment;
+    return '';
+  }
+  return [...s][0] ?? '';
+}

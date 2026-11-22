@@ -57,7 +57,7 @@ function validate(input: TypeInput): TypeInput {
     const label = f.label.trim();
     const key = (f.key || slugify(label)).trim();
     if (!label) throw new Error('Every field needs a label.');
-    if (!['text', 'longtext', 'number'].includes(f.kind)) throw new Error(`Unknown field kind "${f.kind}".`);
+    if (!FIELD_KINDS.some((k) => k.kind === f.kind)) throw new Error(`Unknown field kind "${f.kind}".`);
     if (seen.has(key)) throw new Error(`Two fields share the key "${key}". Give them different labels.`);
     seen.add(key);
     return { key, label, kind: f.kind };

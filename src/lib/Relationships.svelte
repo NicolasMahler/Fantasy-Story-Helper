@@ -3,7 +3,7 @@
   import { rpc } from '../db/client';
   import { LINK_KINDS, type LinkRow } from '../db/links';
   import { href } from './route';
-  import EntityPicker from './EntityPicker.svelte';
+  import PickedEntry from './PickedEntry.svelte';
   import { attempt } from './forms';
 
   let { seriesId, entityId, entityName }: { seriesId: number; entityId: number; entityName: string } = $props();
@@ -55,14 +55,13 @@
     }, (m) => alert(`Couldn't remove: ${m}`));
   }
 
-  $effect(() => {
-    entityId;
-    load();
-  });
+  let loadError = $state<string | null>(null);
+  attempt(load, (m) => (loadError = m));
 </script>
 
 <section class="etched">
   <h2>Relationships {#if links.length}<span class="count">{links.length}</span>{/if}</h2>
+  {#if loadError}<p class="error" role="alert">Couldn't load relationships: {loadError}</p>{/if}
   {#if links.length === 0 && !adding}
     <p class="muted">No relationships yet. Add allies, family, memberships, ownership…</p>
   {/if}
@@ -93,11 +92,7 @@
         </label>
         <div class="field grow">
           <span class="lbl">…of / to</span>
-          {#if target}
-            <div class="row"><strong>{target.name}</strong><button type="button" class="ghost" onclick={() => (target = null)}>Change</button></div>
-          {:else}
-            <EntityPicker {seriesId} exclude={[entityId]} label="Related entry" placeholder="Search entries…" onpick={(e) => (target = { id: e.id, name: e.name })} />
-          {/if}
+          <PickedEntry bind:value={target} {seriesId} exclude={[entityId]} label="Related entry" placeholder="Search entries…" clearLabel="Change" />
         </div>
       </div>
       <details>
@@ -107,13 +102,11 @@
           <div class="row">
             <div class="field grow">
               <span class="lbl">From event</span>
-              {#if from}<div class="row"><span>{from.name}</span><button type="button" class="ghost" onclick={() => (from = null)}>Clear</button></div>
-              {:else}<EntityPicker {seriesId} typeKey="event" label="From event" placeholder="optional" onpick={(e) => (from = { id: e.id, name: e.name })} />{/if}
+              <PickedEntry bind:value={from} {seriesId} typeKey="event" label="From event" placeholder="optional" emphasis={false} />
             </div>
             <div class="field grow">
               <span class="lbl">Until event</span>
-              {#if until}<div class="row"><span>{until.name}</span><button type="button" class="ghost" onclick={() => (until = null)}>Clear</button></div>
-              {:else}<EntityPicker {seriesId} typeKey="event" label="Until event" placeholder="optional" onpick={(e) => (until = { id: e.id, name: e.name })} />{/if}
+              <PickedEntry bind:value={until} {seriesId} typeKey="event" label="Until event" placeholder="optional" emphasis={false} />
             </div>
           </div>
         </div>

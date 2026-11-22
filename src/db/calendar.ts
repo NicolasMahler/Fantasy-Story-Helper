@@ -1,5 +1,5 @@
 import type { SqlDb } from './types';
-import { insertId } from './sql';
+import { insertId, seriesOf } from './sql';
 import { plural } from '../lib/text';
 import { recomputeSeries } from './events';
 
@@ -57,13 +57,13 @@ export function createAge(db: SqlDb, seriesId: number, input: AgeInput): number 
 
 export function updateAge(db: SqlDb, id: number, input: AgeInput): void {
   db.transaction(() => {
-    const [row] = db.query<{ series_id: number }>('SELECT series_id FROM age WHERE id = ?', [id]);
-    if (!row) throw new Error('Age not found.');
-    const a = validateAge(db, row.series_id, input, id);
+    const seriesId = seriesOf(db, 'age', id);
+    if (seriesId === undefined) throw new Error('Age not found.');
+    const a = validateAge(db, seriesId, input, id);
     db.exec('UPDATE age SET name = ?, start_year = ?, end_year = ?, direction = ? WHERE id = ?', [
       a.name, a.startYear, a.endYear, a.direction, id,
     ]);
-    recomputeSeries(db, row.series_id);
+    recomputeSeries(db, seriesId);
   });
 }
 

@@ -1,5 +1,6 @@
 import type { SqlDb } from './types';
 import { insertId } from './sql';
+import { detachRelativeDates } from './events';
 
 export interface DefaultEntityType {
   key: string;
@@ -58,12 +59,7 @@ export function createSeries(db: SqlDb, input: { name: string; description?: str
 /** Deletes a series and (via ON DELETE CASCADE) everything that belongs to it. */
 export function deleteSeries(db: SqlDb, id: number): void {
   db.transaction(() => {
-    // Relative dates would be SET NULL mid-delete and trip the event CHECK, so detach them first.
-    db.exec(
-      `UPDATE event SET date_precision = NULL, relative_to_event = NULL, offset_years = NULL
-       WHERE relative_to_event IS NOT NULL AND entity_id IN (SELECT id FROM entity WHERE series_id = ?)`,
-      [id],
-    );
+    detachRelativeDates(db, id);
     // entity.type_id is RESTRICT, so remove entities before their types cascade away.
     db.exec('DELETE FROM entity WHERE series_id = ?', [id]);
     db.exec('DELETE FROM series WHERE id = ?', [id]);

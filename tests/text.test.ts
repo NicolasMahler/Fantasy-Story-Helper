@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { plural, slugify } from '../src/lib/text';
+import { plural, slugify, firstGrapheme } from '../src/lib/text';
 
 describe('plural', () => {
   it('handles one, many and irregular plurals', () => {
@@ -13,5 +13,16 @@ describe('slugify', () => {
   it('strips accents and punctuation, with a fallback for empty results', () => {
     expect(slugify('Déjà Vu: Part 2!')).toBe('deja-vu-part-2');
     expect(slugify('!!!', 'series')).toBe('series');
+  });
+});
+
+describe('firstGrapheme', () => {
+  it('keeps one whole character, including multi-part emoji', () => {
+    expect(firstGrapheme('⛵')).toBe('⛵');
+    expect(firstGrapheme('🧙‍♂️')).toBe('🧙‍♂️');
+    expect(firstGrapheme('👨‍👩‍👧‍👦x')).toBe('👨‍👩‍👧‍👦');
+    expect(firstGrapheme('🇫🇷🇩🇪')).toBe('🇫🇷');
+    expect(firstGrapheme('ab')).toBe('a');
+    expect(firstGrapheme('')).toBe('');
   });
 });

@@ -121,7 +121,7 @@
     }
   }
 
-  refresh();
+  attempt(refresh, (m) => (status = `Couldn't load your library. ${m}`));
 </script>
 
 <h1>Settings</h1>

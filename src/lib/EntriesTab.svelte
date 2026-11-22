@@ -8,6 +8,7 @@
   import { rise } from './motion';
   import { STATUS_LABELS, type TheoryStatus } from '../db/theories';
   import { loadFilter, saveFilter } from './entriesFilter';
+  import { statusLine } from './theory';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -24,13 +25,15 @@
   const showingTheories = $derived(theoryType !== undefined && typeId === theoryType.id);
   const THEORY_FILTERS: TheoryStatus[] = ['open', 'confirmed', 'wrong', 'answered'];
   let loaded = $state(false);
+  let loadError = $state<string | null>(null);
+  const failed = (e: Error) => (loadError = e.message);
 
   $effect(() => {
     rpc('listTypes', seriesId).then((t) => {
       types = t;
       // A remembered type may have been deleted since.
       if (typeId !== null && !t.some((x) => x.id === typeId)) typeId = null;
-    });
+    }, failed);
   });
 
   $effect(() => saveFilter(seriesId, { typeId, search, theoryStatus }));
@@ -40,7 +43,8 @@
     rpc('listEntities', seriesId, filter).then((e) => {
       entries = e;
       loaded = true;
-    });
+      loadError = null;
+    }, failed);
   });
 </script>
 
@@ -69,7 +73,9 @@
   </div>
 {/if}
 
-{#if loaded && entries.length === 0}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load entries: {loadError}</p>
+{:else if loaded && entries.length === 0}
   <p class="muted">
     {search || typeId ? 'No entries match.' : 'No entries yet. Create one, or type @ in any description to create entries as you go.'}
   </p>
@@ -86,7 +92,7 @@
             {#if e.snippet}<small class="why">{e.snippet}</small>{/if}
             {#if e.theory_status}
               <small class="tstatus s-{e.theory_status}">
-                <span class="sdot s-{e.theory_status}" aria-hidden="true"></span>{e.theory_status === 'open' ? (e.theory_kind === 'question' ? 'Open question' : 'Open') : STATUS_LABELS[e.theory_status]}
+                <span class="sdot s-{e.theory_status}" aria-hidden="true"></span>{statusLine({ kind: e.theory_kind ?? 'theory', status: e.theory_status, resolvedBook: null })}
               </small>
             {/if}
           </span>

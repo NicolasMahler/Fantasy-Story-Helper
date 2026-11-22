@@ -2,8 +2,9 @@
   import { rpc } from '../db/client';
   import type { BookRow } from '../db/books';
   import { attempt } from './forms';
+  import { plural } from './text';
 
-  let { seriesId, onchange }: { seriesId: number; onchange?: () => void } = $props();
+  let { seriesId }: { seriesId: number } = $props();
 
   let books = $state<BookRow[]>([]);
   let title = $state('');
@@ -13,7 +14,6 @@
 
   async function load() {
     books = await rpc('listBooks', seriesId);
-    onchange?.();
   }
 
   async function run(fn: () => Promise<unknown>) {
@@ -47,7 +47,7 @@
     run(() => rpc('deleteBook', b.id));
   }
 
-  load();
+  attempt(load, (m) => (error = m));
 </script>
 
 {#if books.length === 0}
@@ -66,7 +66,7 @@
         {:else}
           <div class="grow">
             <strong>{b.title}</strong>
-            <small class="muted">{b.entities} first appearances</small>
+            <small class="muted">{plural(b.entities, 'first appearance')}</small>
           </div>
           <div class="row tight">
             <button class="ghost" disabled={i === 0} onclick={() => run(() => rpc('moveBook', b.id, -1))} aria-label="Move earlier">↑</button>

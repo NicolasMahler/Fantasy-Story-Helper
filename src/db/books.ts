@@ -1,6 +1,17 @@
 import type { SqlDb } from './types';
 import { insertId } from './sql';
 
+/** A book as other records show it: "Book 2: Deadhouse Gates". */
+export interface BookRef {
+  id: number;
+  number: number;
+  title: string;
+}
+
+/** The book a LEFT JOIN found, or null when the reference is empty. */
+export const bookRef = (id: number | null, number: number | null, title: string | null): BookRef | null =>
+  id ? { id, number: number!, title: title! } : null;
+
 export interface BookRow {
   id: number;
   number: number;
