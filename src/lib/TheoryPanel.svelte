@@ -14,6 +14,7 @@
   let books = $state<BookRow[]>([]);
   let editing = $state(false);
   let error = $state<string | null>(null);
+  let loadError = $state<string | null>(null);
 
   let kind = $state<TheoryKind>('theory');
   let status = $state<TheoryStatus>('open');
@@ -53,10 +54,12 @@
 
   const settled = (s: TheoryStatus) => s !== 'open';
 
-  load();
+  attempt(load, (m) => (loadError = m));
 </script>
 
-{#if detail}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load the theory: {loadError}</p>
+{:else if detail}
   <section class="card theory">
     {#if editing}
       <form class="stack" onsubmit={save}>

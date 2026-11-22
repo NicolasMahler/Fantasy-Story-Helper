@@ -70,7 +70,7 @@
   const range = (a: AgeRow) =>
     a.end_year === null ? `from ${a.start_year}` : `${a.start_year} → ${a.end_year}`;
 
-  load();
+  attempt(load, (m) => (error = m));
 </script>
 
 <section>

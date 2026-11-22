@@ -24,13 +24,15 @@
   const showingTheories = $derived(theoryType !== undefined && typeId === theoryType.id);
   const THEORY_FILTERS: TheoryStatus[] = ['open', 'confirmed', 'wrong', 'answered'];
   let loaded = $state(false);
+  let loadError = $state<string | null>(null);
+  const failed = (e: Error) => (loadError = e.message);
 
   $effect(() => {
     rpc('listTypes', seriesId).then((t) => {
       types = t;
       // A remembered type may have been deleted since.
       if (typeId !== null && !t.some((x) => x.id === typeId)) typeId = null;
-    });
+    }, failed);
   });
 
   $effect(() => saveFilter(seriesId, { typeId, search, theoryStatus }));
@@ -40,7 +42,8 @@
     rpc('listEntities', seriesId, filter).then((e) => {
       entries = e;
       loaded = true;
-    });
+      loadError = null;
+    }, failed);
   });
 </script>
 
@@ -69,7 +72,9 @@
   </div>
 {/if}
 
-{#if loaded && entries.length === 0}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load entries: {loadError}</p>
+{:else if loaded && entries.length === 0}
   <p class="muted">
     {search || typeId ? 'No entries match.' : 'No entries yet. Create one, or type @ in any description to create entries as you go.'}
   </p>

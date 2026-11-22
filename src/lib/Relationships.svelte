@@ -55,14 +55,13 @@
     }, (m) => alert(`Couldn't remove: ${m}`));
   }
 
-  $effect(() => {
-    entityId;
-    load();
-  });
+  let loadError = $state<string | null>(null);
+  attempt(load, (m) => (loadError = m));
 </script>
 
 <section class="etched">
   <h2>Relationships {#if links.length}<span class="count">{links.length}</span>{/if}</h2>
+  {#if loadError}<p class="error" role="alert">Couldn't load relationships: {loadError}</p>{/if}
   {#if links.length === 0 && !adding}
     <p class="muted">No relationships yet. Add allies, family, memberships, ownership…</p>
   {/if}

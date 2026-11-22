@@ -46,7 +46,7 @@
     error = null;
     if (!q) return;
     const mine = ++seq;
-    const found = await rpc('searchEntities', seriesId, q.typeKey, q.term);
+    const found = await rpc('searchEntities', seriesId, q.typeKey, q.term).catch(() => [] as EntityListItem[]);
     if (mine !== seq) return;
     results = found;
     active = 0;

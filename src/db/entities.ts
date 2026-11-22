@@ -92,6 +92,15 @@ function typeKey(db: SqlDb, seriesId: number, typeId: number): string {
   return t.key;
 }
 
+/** Returns the book id (or null), or throws if the book doesn't belong to the series. */
+function firstBook(db: SqlDb, seriesId: number, bookId: number | null | undefined): number | null {
+  if (bookId == null) return null;
+  if (!db.query('SELECT 1 FROM book WHERE id = ? AND series_id = ?', [bookId, seriesId]).length) {
+    throw new Error('That book does not belong to this series.');
+  }
+  return bookId;
+}
+
 /** Rule 3: rebuild this entity's mention rows from its description (same-series targets only, no self-links). */
 function rebuildMentions(db: SqlDb, id: number, seriesId: number, description: string): void {
   db.exec('DELETE FROM mention WHERE source_entity_id = ?', [id]);
@@ -112,7 +121,7 @@ export function createEntity(db: SqlDb, input: EntityInput): number {
     db.exec(
       `INSERT INTO entity (series_id, type_id, name, description, first_book_id, attributes, aliases) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        input.seriesId, input.typeId, name, description, input.firstBookId ?? null, JSON.stringify(input.attributes ?? {}),
+        input.seriesId, input.typeId, name, description, firstBook(db, input.seriesId, input.firstBookId), JSON.stringify(input.attributes ?? {}),
         JSON.stringify(cleanAliases(input.aliases ?? [], name)),
       ],
     );
@@ -138,7 +147,7 @@ export function updateEntity(db: SqlDb, id: number, patch: EntityPatch): void {
     };
     if (patch.name !== undefined) set('name', cleanName(patch.name));
     if (patch.description !== undefined) set('description', patch.description);
-    if (patch.firstBookId !== undefined) set('first_book_id', patch.firstBookId);
+    if (patch.firstBookId !== undefined) set('first_book_id', firstBook(db, cur.series_id, patch.firstBookId));
     if (patch.attributes !== undefined) set('attributes', JSON.stringify(patch.attributes));
     // Re-clean on a rename too, so an entry never lists its own name as another name.
     if (patch.aliases !== undefined || patch.name !== undefined) {

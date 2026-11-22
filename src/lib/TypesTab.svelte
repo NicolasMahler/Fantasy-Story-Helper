@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { plural } from './text';
+  import { plural, firstGrapheme } from './text';
   import { rpc } from '../db/client';
   import { FIELD_KINDS, slugify, type EntityTypeRow, type TypeInput } from '../db/entityTypes';
   import { attempt } from './forms';
@@ -16,6 +16,7 @@
   let editing = $state<number | 'new' | null>(null);
   let draft = $state<TypeInput>({ name: '', icon: '', color: '#888888', fields: [] });
   let error = $state<string | null>(null);
+  let loadError = $state<string | null>(null);
 
   async function load() {
     types = await rpc('listTypes', seriesId);
@@ -51,10 +52,11 @@
     }, (m) => (error = m));
   }
 
-  load();
+  attempt(load, (m) => (loadError = m));
 </script>
 
 <p class="muted">Type <code>@key:</code> in a description to search only that type.</p>
+{#if loadError}<p class="error" role="alert">Couldn't load the types: {loadError}</p>{/if}
 
 <ul class="list">
   {#each types as t (t.id)}
@@ -99,7 +101,7 @@
         {/each}
       </div>
       <label class="emoji-in">Or use an emoji
-        <input value={isIconName(draft.icon) ? '' : draft.icon} maxlength="4" placeholder="⛵" oninput={(e) => (draft.icon = e.currentTarget.value || 'star')} />
+        <input value={isIconName(draft.icon) ? '' : draft.icon} placeholder="⛵" oninput={(e) => (draft.icon = firstGrapheme(e.currentTarget.value.trim()) || 'star')} />
       </label>
     </fieldset>
     <fieldset>

@@ -9,10 +9,12 @@
   import TimelineTab from './TimelineTab.svelte';
   import GraphTab from './GraphTab.svelte';
   import { slideIndicator } from './motion';
+  import { attempt } from './forms';
 
   let { seriesId, tab, focus }: { seriesId: number; tab: SeriesTab; focus?: number } = $props();
 
   let series = $state<SeriesRow | null | undefined>(undefined);
+  let loadError = $state<string | null>(null);
 
   async function load() {
     series = await rpc('getSeries', seriesId);
@@ -27,10 +29,12 @@
     { id: 'calendar', label: 'Calendar' },
   ];
 
-  load();
+  attempt(load, (m) => (loadError = m));
 </script>
 
-{#if series === null}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load this series: {loadError}</p>
+{:else if series === null}
   <p>This series doesn't exist. <a href="#/">Back to the library</a>.</p>
 {:else if series}
   <a class="back" href="#/">← Library</a>
@@ -49,7 +53,7 @@
       {#if tab === 'entries'}
         <EntriesTab {seriesId} />
       {:else if tab === 'books'}
-        <BooksTab {seriesId} onchange={load} />
+        <BooksTab {seriesId} />
       {:else if tab === 'timeline'}
         {#key focus}<TimelineTab {seriesId} {focus} />{/key}
       {:else if tab === 'graph'}

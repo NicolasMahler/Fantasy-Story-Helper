@@ -18,6 +18,7 @@
   let buckets = $state<BucketRow[]>([]);
   let editing = $state(false);
   let error = $state<string | null>(null);
+  let loadError = $state<string | null>(null);
   let pError = $state<string | null>(null);
   let newRole = $state('');
 
@@ -83,18 +84,20 @@
     }, (m) => (error = m));
   }
 
-  async function participantOp(fn: () => Promise<unknown>) {
+  function participantOp(fn: () => Promise<unknown>): Promise<boolean> {
     pError = null;
-    await attempt(async () => {
+    return attempt(async () => {
       await fn();
       await load();
     }, (m) => (pError = m));
   }
 
-  load();
+  attempt(load, (m) => (loadError = m));
 </script>
 
-{#if detail}
+{#if loadError}
+  <p class="error" role="alert">Couldn't load the event details: {loadError}</p>
+{:else if detail}
   <section class="card event">
     {#if editing}
       <form class="stack" onsubmit={save}>
@@ -230,7 +233,10 @@
               list="role-suggestions"
               value={p.role}
               aria-label={`Role of ${p.name}`}
-              onchange={(e) => participantOp(() => rpc('updateParticipantRole', p.id, e.currentTarget.value))}
+              onchange={(e) => {
+                const input = e.currentTarget;
+                participantOp(() => rpc('updateParticipantRole', p.id, input.value)).then((ok) => { if (!ok) input.value = p.role; });
+              }}
             />
             <button class="ghost" aria-label={`Remove ${p.name}`} onclick={() => participantOp(() => rpc('removeParticipant', p.id))}>✕</button>
           </li>

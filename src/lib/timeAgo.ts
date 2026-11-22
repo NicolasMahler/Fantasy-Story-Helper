@@ -7,10 +7,9 @@ export function timeAgo(iso: string, now = new Date()): string {
   if (s < 45) return 'just now';
   let v = s;
   for (const [size, name] of units) {
-    if (v < size) {
-      const n = Math.round(v);
-      return `${plural(n, name)} ago`;
-    }
+    const n = Math.round(v);
+    // 59.7 minutes rounds to 60: say "1 hour" instead.
+    if (n < size) return `${plural(n, name)} ago`;
     v /= size;
   }
   return 'a long time ago';

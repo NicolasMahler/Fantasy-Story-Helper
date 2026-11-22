@@ -5,6 +5,7 @@
   import type { EntityTypeRow } from '../db/entityTypes';
   import type { BookRow } from '../db/books';
   import MentionTextarea from './MentionTextarea.svelte';
+  import { attempt, mergeAttributes } from './forms';
 
   let {
     seriesId,
@@ -53,7 +54,7 @@
     books = b;
     typeId ??= t.find((x) => x.key === 'character')?.id ?? t[0]?.id ?? null;
   }
-  load();
+  attempt(load, (m) => (error = m));
 
   async function save(ev: SubmitEvent) {
     ev.preventDefault();
@@ -64,16 +65,8 @@
       && !confirm('Changing this away from Theory removes its status and how it was settled. Continue?')) return;
     busy = true;
     error = null;
-    // Only keep values for fields the chosen type defines, and store numbers as numbers.
-    const attrs: Attributes = {};
-    for (const f of type?.fields ?? []) {
-      const v = attributes[f.key];
-      if (v === undefined || v === '' || v === null) continue;
-      attrs[f.key] = f.kind === 'number' ? Number(v) : String(v);
-    }
-    // Keep values for fields of other types only if the type didn't change.
-    const keepOther = entity && entity.type.id === typeId ? entity.attributes : {};
-    const merged = { ...keepOther, ...attrs };
+    // Values for fields the type no longer has are kept only if the type didn't change.
+    const merged = mergeAttributes(type?.fields ?? [], attributes, entity && entity.type.id === typeId ? entity.attributes : null);
     const aliases = aliasText.split(',');
     try {
       if (entity) {
