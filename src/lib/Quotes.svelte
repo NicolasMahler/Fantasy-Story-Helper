@@ -86,8 +86,8 @@
         <span class="lbl">For the theory</span>
         <div class="chips stances" role="group" aria-label="How it bears on the theory">
           {#each [['for', 'Supports'], ['against', 'Against'], [null, 'Neither']] as const as [s, label] (label)}
-            <button type="button" class="chip" aria-pressed={stance === s} onclick={() => (stance = s)}>
-              <span class="dot d-{s ?? 'none'}" aria-hidden="true"></span>{label}
+            <button type="button" class="chip s-{s ?? 'none'}" aria-pressed={stance === s} onclick={() => (stance = s)}>
+              {label}
             </button>
           {/each}
         </div>
@@ -182,14 +182,12 @@
   .tools { position: absolute; top: 0; right: 0; display: flex; }
   .tools button { min-height: 32px; padding: 0 0.6rem; font-size: 0.85rem; }
   .stances { margin-bottom: 0; }
-  .stances .chip { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: none; }
-  .d-for { background: var(--ok); }
-  .d-against { background: var(--danger); }
-  .d-none { border: 2px solid var(--muted); }
-  /* On a highlighted chip the accent fill would swallow the dot; ring it in the chip's text colour. */
-  .chip[aria-pressed='true'] .dot { box-shadow: 0 0 0 1.5px currentColor; }
-  .chip[aria-pressed='true'] .d-none { border-color: currentColor; box-shadow: none; }
+  /* The chosen stance takes its own colour instead of the accent: green supports, red against, yellow neither. */
+  .stances { --neither: #a07a0c; }
+  :global([data-theme='dark']) .stances { --neither: #e6c35c; }
+  .stances .chip.s-for[aria-pressed='true'] { background: var(--ok); }
+  .stances .chip.s-against[aria-pressed='true'] { background: var(--danger); }
+  .stances .chip.s-none[aria-pressed='true'] { background: var(--neither); }
   .ch { width: 10rem; }
   .field { display: grid; gap: 0.25rem; font-size: 0.9rem; }
   form { margin-bottom: 0.9rem; }
