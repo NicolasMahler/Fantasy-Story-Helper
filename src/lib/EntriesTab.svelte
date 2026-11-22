@@ -8,6 +8,7 @@
   import { rise } from './motion';
   import { STATUS_LABELS, type TheoryStatus } from '../db/theories';
   import { loadFilter, saveFilter } from './entriesFilter';
+  import { statusLine } from './theory';
 
   let { seriesId }: { seriesId: number } = $props();
 
@@ -91,7 +92,7 @@
             {#if e.snippet}<small class="why">{e.snippet}</small>{/if}
             {#if e.theory_status}
               <small class="tstatus s-{e.theory_status}">
-                <span class="sdot s-{e.theory_status}" aria-hidden="true"></span>{e.theory_status === 'open' ? (e.theory_kind === 'question' ? 'Open question' : 'Open') : STATUS_LABELS[e.theory_status]}
+                <span class="sdot s-{e.theory_status}" aria-hidden="true"></span>{statusLine({ kind: e.theory_kind ?? 'theory', status: e.theory_status, resolvedBook: null })}
               </small>
             {/if}
           </span>

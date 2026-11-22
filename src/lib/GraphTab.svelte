@@ -12,6 +12,7 @@
   import type { GraphData } from '../db/graph';
   import { buildGraph, type ModelEdge, type ModelNode } from './graphModel';
   import { href } from './route';
+  import BookSelect from './BookSelect.svelte';
   import { reducedMotion } from './motion';
   import { ICONS, isIconName } from './icons';
 
@@ -208,10 +209,7 @@
     </div>
     <div class="row opts">
       {#if data.books.length > 1}
-        <select aria-label="Only events from book" bind:value={bookId}>
-          <option value={null}>All books</option>
-          {#each data.books as b (b.id)}<option value={b.id}>Book {b.number}: {b.title}</option>{/each}
-        </select>
+        <BookSelect bind:value={bookId} books={data.books} emptyLabel="All books" aria-label="Only events from book" />
       {/if}
       <label class="slider">Hide ties under
         <input type="range" min="1" max="5" bind:value={minShared} aria-label="Minimum shared events" />
@@ -341,7 +339,7 @@
   .chip { border-radius: 999px; padding: 0.25rem 0.9rem; min-height: 36px; font-size: 0.82rem; color: var(--muted); }
   .chip[aria-pressed='true'] { border-color: var(--c); color: var(--text); background: color-mix(in srgb, var(--c) 18%, transparent); }
   .opts { gap: 12px; font-size: 0.85rem; color: var(--muted); }
-  .opts select { min-height: 34px; padding: 0.2rem 0.5rem; font-size: 0.85rem; }
+  .opts :global(select) { min-height: 34px; padding: 0.2rem 0.5rem; font-size: 0.85rem; }
   .slider { display: flex !important; align-items: center; gap: 8px; }
   .slider input { width: 7rem; padding: 0; accent-color: var(--accent); }
   .check { display: flex !important; align-items: center; gap: 6px; }

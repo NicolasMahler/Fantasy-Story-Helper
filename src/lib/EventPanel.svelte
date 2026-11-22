@@ -8,6 +8,8 @@
   import { DATE_PRECISIONS, type DatePrecision } from '../db/dates';
   import { href } from './route';
   import EntityPicker from './EntityPicker.svelte';
+  import PickedEntry from './PickedEntry.svelte';
+  import BookSelect from './BookSelect.svelte';
   import { attempt, numOrNull } from './forms';
 
   let { seriesId, eventId }: { seriesId: number; eventId: number } = $props();
@@ -109,19 +111,12 @@
         {#if mode === 'recounted'}
           <div class="field">
             <span class="lbl">Told by</span>
-            {#if toldBy}
-              <div class="row"><strong>{toldBy.name}</strong><button type="button" class="ghost" onclick={() => (toldBy = null)}>Clear</button></div>
-            {:else}
-              <EntityPicker {seriesId} label="Told by" placeholder="Who tells or remembers it?" onpick={(e) => (toldBy = { id: e.id, name: e.name })} />
-            {/if}
+            <PickedEntry bind:value={toldBy} {seriesId} label="Told by" placeholder="Who tells or remembers it?" />
           </div>
         {/if}
 
         <label>{mode === 'recounted' ? 'Described in' : 'Happens in'}
-          <select bind:value={bookId}>
-            <option value={null}>(no book)</option>
-            {#each books as b (b.id)}<option value={b.id}>Book {b.number}: {b.title}</option>{/each}
-          </select>
+          <BookSelect bind:value={bookId} {books} />
         </label>
 
         <label>Date
@@ -162,11 +157,7 @@
             </label>
             <div class="field grow">
               <span class="lbl">Event</span>
-              {#if relTarget}
-                <div class="row"><strong>{relTarget.name}</strong><button type="button" class="ghost" onclick={() => (relTarget = null)}>Change</button></div>
-              {:else}
-                <EntityPicker {seriesId} typeKey="event" exclude={[eventId]} label="Relative to event" placeholder="Search events…" onpick={(e) => (relTarget = { id: e.id, name: e.name })} />
-              {/if}
+              <PickedEntry bind:value={relTarget} {seriesId} typeKey="event" exclude={[eventId]} label="Relative to event" placeholder="Search events…" clearLabel="Change" />
             </div>
           </div>
           <small class="muted">Use 0 years for “the same year as”.</small>

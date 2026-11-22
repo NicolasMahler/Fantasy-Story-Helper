@@ -2,6 +2,7 @@
   import Icon from './Icon.svelte';
   import type { TimelineEvent } from '../db/timeline';
   import { href } from './route';
+  import { reducedMotion } from './motion';
 
   let {
     event,
@@ -20,8 +21,7 @@
     if (!on) return;
     // Wait a frame so the timeline (and the open card) are laid out before scrolling.
     requestAnimationFrame(() => {
-      const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-      node.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+      node.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
     });
   }
 

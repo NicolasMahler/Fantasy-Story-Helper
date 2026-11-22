@@ -6,6 +6,7 @@
     type TheoryDetail, type TheoryKind, type TheoryStatus,
   } from '../db/theories';
   import { attempt } from './forms';
+  import BookSelect from './BookSelect.svelte';
   import { statusLine } from './theory';
 
   let { seriesId, theoryId }: { seriesId: number; theoryId: number } = $props();
@@ -78,10 +79,7 @@
 
         {#if settled(status)}
           <label>{status === 'wrong' ? 'Shown wrong in' : status === 'answered' ? 'Answered in' : 'Confirmed in'}
-            <select bind:value={bookId}>
-              <option value={null}>(no book)</option>
-              {#each books as b (b.id)}<option value={b.id}>Book {b.number}: {b.title}</option>{/each}
-            </select>
+            <BookSelect bind:value={bookId} {books} />
           </label>
           <label>{kind === 'question' ? 'The answer' : 'What happened'}
             <textarea rows="3" bind:value={resolution} placeholder={kind === 'question' ? 'What you found out' : 'How it played out'}></textarea>

@@ -5,6 +5,7 @@
   import type { EntityTypeRow } from '../db/entityTypes';
   import type { BookRow } from '../db/books';
   import MentionTextarea from './MentionTextarea.svelte';
+  import BookSelect from './BookSelect.svelte';
   import { attempt, mergeAttributes } from './forms';
 
   let {
@@ -95,10 +96,7 @@
       </select>
     </label>
     <label class="grow">First appears in
-      <select bind:value={firstBookId}>
-        <option value={null}>(not set)</option>
-        {#each books as b (b.id)}<option value={b.id}>Book {b.number}: {b.title}</option>{/each}
-      </select>
+      <BookSelect bind:value={firstBookId} {books} emptyLabel="(not set)" />
     </label>
   </div>
 
