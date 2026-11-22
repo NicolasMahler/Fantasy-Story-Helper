@@ -82,11 +82,16 @@
       <textarea rows="3" bind:value={text} placeholder="The line from the book" required></textarea>
     </label>
     {#if isTheory}
-      <fieldset class="seg" aria-label="How it bears on the theory">
-        <label><input type="radio" name="stance" checked={stance === 'for'} onchange={() => (stance = 'for')} /> Supports it</label>
-        <label><input type="radio" name="stance" checked={stance === 'against'} onchange={() => (stance = 'against')} /> Against it</label>
-        <label><input type="radio" name="stance" checked={stance === null} onchange={() => (stance = null)} /> Neither</label>
-      </fieldset>
+      <div class="field">
+        <span class="lbl">For the theory</span>
+        <div class="chips stances" role="group" aria-label="How it bears on the theory">
+          {#each [['for', 'Supports'], ['against', 'Against'], [null, 'Neither']] as const as [s, label] (label)}
+            <button type="button" class="chip" aria-pressed={stance === s} onclick={() => (stance = s)}>
+              <span class="dot d-{s ?? 'none'}" aria-hidden="true"></span>{label}
+            </button>
+          {/each}
+        </div>
+      </div>
     {/if}
     <div class="row">
       <label class="grow">Book
@@ -176,9 +181,15 @@
   .against .stance { color: var(--danger); }
   .tools { position: absolute; top: 0; right: 0; display: flex; }
   .tools button { min-height: 32px; padding: 0 0.6rem; font-size: 0.85rem; }
-  .seg { border: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
-  .seg label { display: flex; gap: 0.4rem; align-items: center; font-size: 1rem; }
-  .seg input { width: auto; }
+  .stances { margin-bottom: 0; }
+  .stances .chip { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: none; }
+  .d-for { background: var(--ok); }
+  .d-against { background: var(--danger); }
+  .d-none { border: 2px solid var(--muted); }
+  /* On a highlighted chip the accent fill would swallow the dot; ring it in the chip's text colour. */
+  .chip[aria-pressed='true'] .dot { box-shadow: 0 0 0 1.5px currentColor; }
+  .chip[aria-pressed='true'] .d-none { border-color: currentColor; box-shadow: none; }
   .ch { width: 10rem; }
   .field { display: grid; gap: 0.25rem; font-size: 0.9rem; }
   form { margin-bottom: 0.9rem; }
